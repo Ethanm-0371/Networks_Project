@@ -38,10 +38,12 @@ public class GameClient : MonoBehaviour
         if(Input.GetKeyDown(KeyCode.Alpha1))
         {
             PacketHandler.SendPacket(clientSocket, serverEndPoint, new ConnectionTest1(7, "Mondongo")); //Debug only
+            Debug.Log("Client sent a Test1");
         }
         if (Input.GetKeyDown(KeyCode.Alpha2))
         {
             PacketHandler.SendPacket(clientSocket, serverEndPoint, new ConnectionTest2("Goku calvo", Vector3.one)); //Debug only
+            Debug.Log("Client sent a Test1");
         }
     }
 
