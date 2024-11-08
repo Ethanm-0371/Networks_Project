@@ -43,7 +43,11 @@ public class GameClient : MonoBehaviour
         if (Input.GetKeyDown(KeyCode.Alpha2))
         {
             PacketHandler.SendPacket(clientSocket, serverEndPoint, new ConnectionTest2("Goku calvo", Vector3.one)); //Debug only
-            Debug.Log("Client sent a Test1");
+            Debug.Log("Client sent a Test2");
+        }
+        if (Input.GetKeyDown(KeyCode.Backspace))
+        {
+            ScenesHandler.Singleton.LoadScene("Main_Menu", UnityEngine.SceneManagement.LoadSceneMode.Single);
         }
     }
 

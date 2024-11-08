@@ -22,7 +22,7 @@ public class MainMenuScreen : MonoBehaviour
         serverGO.GetComponent<GameServer>().Init();
         serverGO.GetComponent<GameClient>().Init(IPAddress.Loopback.ToString(), HostUsernameInputField.text);
 
-        //SceneManager.LoadScene("Lobby"); //Fix later
+        ScenesHandler.Singleton.LoadScene("Lobby", LoadSceneMode.Single);
     }
     public void OnClickJoin()
     {
@@ -32,7 +32,7 @@ public class MainMenuScreen : MonoBehaviour
         GameObject clientGO = (GameObject) Instantiate(clientPrefab);
         clientGO.GetComponent<GameClient>().Init(IPInputField.text, ClientUsernameInputField.text);
 
-        //SceneManager.LoadScene("Lobby"); //Fix later
+        ScenesHandler.Singleton.LoadScene("Lobby", LoadSceneMode.Single);
     }
     public void OnClickExit()
     {
