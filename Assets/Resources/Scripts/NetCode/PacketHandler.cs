@@ -6,26 +6,55 @@ using System.Net;
 using System.Net.Sockets;
 using UnityEngine;
 
+public class ConnectionTest1
+{
+    public ConnectionTest1(int value, string message)
+    {
+        _value = value;
+        _message = message;
+    }
+
+    public int _value;
+    public string _message;
+}
+public class ConnectionTest2
+{
+    public ConnectionTest2(string name, Vector3 pos)
+    {
+        _name = name;
+        _position = pos;
+    }
+
+    public string _name;
+    public Vector3 _position;
+}
+
+
 public static class PacketHandler
 {
     public enum PacketType
     {
         None,
+        Test1,
+        Test2,
+        PlayerData,
         EntityPlayer,
         EntityEnemy
     }
 
     static Dictionary<Type, PacketType> encodeTypes = new Dictionary<Type, PacketType>()
     {
-        {null, PacketType.None},
-        {typeof(int), PacketType.EntityPlayer}, //Change later
-        {typeof(int), PacketType.EntityEnemy}
+        {typeof(object),            PacketType.None}, // Acts as the "null" equivalent
+        {typeof(ConnectionTest1),   PacketType.Test1}, //Change later
+        {typeof(ConnectionTest2),   PacketType.Test2}, //Change later
+        {typeof(PlayerData),        PacketType.PlayerData}
     };
     static Dictionary<PacketType, Type> decodeTypes = new Dictionary<PacketType, Type>()
     {
-        {PacketType.None, null},
-        {PacketType.EntityPlayer, typeof(int)}, //Change later
-        {PacketType.EntityEnemy, typeof(int)}
+        {PacketType.None,           typeof(object)}, // Acts as the "null" equivalent
+        {PacketType.Test1,          typeof(ConnectionTest1)}, //Change later
+        {PacketType.Test2,          typeof(ConnectionTest2)}, //Change later
+        {PacketType.PlayerData,     typeof(PlayerData)}
     };
 
     private static byte[] EncodeData<T>(PacketType type, T classToEncode)
@@ -41,18 +70,24 @@ public static class PacketHandler
         writer.Close();
         stream.Close();
 
-        Array.Resize(ref data, data.Length + 1);
+        if (data.Length > 1023) { Debug.LogWarning("Packet data is bigger than max size"); }
 
-        data[data.Length - 1] = (byte)type;
+        byte[] result = new byte[1024];
+        result[0] = (byte)type;
 
-        return data;
+        Buffer.BlockCopy(data, 0, result, 1, data.Length);
+        return result;
     }
 
     public static object DecodeData(byte[] data)
     {
-        PacketType type = (PacketType)data[data.Length - 1];
+        PacketType type = (PacketType)data[0];
 
-        MemoryStream stream = new MemoryStream(data, 0, data.Length - 1);
+        //Find where in the packet the data ends
+        int dataLength = Array.IndexOf(data, (byte)0, 1) - 1;
+        if (dataLength < 0) dataLength = data.Length - 1;
+
+        MemoryStream stream = new MemoryStream(data, 1, dataLength);
         BinaryReader reader = new BinaryReader(stream);
         stream.Seek(0, SeekOrigin.Begin);
 
