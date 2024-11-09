@@ -29,6 +29,9 @@ public class MainMenuScreen : MonoBehaviour
         if (string.IsNullOrWhiteSpace(IPInputField.text) || 
             string.IsNullOrWhiteSpace(ClientUsernameInputField.text)) { return; } //Handle error
 
+        //Send ping to check server exists
+
+        //If server exists, connect
         GameObject clientGO = (GameObject) Instantiate(clientPrefab);
         clientGO.GetComponent<GameClient>().Init(IPInputField.text, ClientUsernameInputField.text);
 

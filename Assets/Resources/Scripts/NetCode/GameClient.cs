@@ -10,8 +10,8 @@ public class GameClient : MonoBehaviour
 {
     public static GameClient Singleton { get; private set; }
 
-    Socket clientSocket;
-    IPEndPoint serverEndPoint;
+    public Socket clientSocket;
+    public IPEndPoint serverEndPoint;
     Dictionary<Type, Action<object>> functionsDictionary;
 
     private void Awake()
@@ -29,6 +29,7 @@ public class GameClient : MonoBehaviour
 
         functionsDictionary = new Dictionary<Type, Action<object>>()
         {
+            { typeof(Dictionary<int, GameObject>), obj => { HandleReceiveNetObjects((Dictionary<int, GameObject>)obj); } }, //Change later
             { typeof(ConnectionTest1), obj => { Debug.Log("Client received a Test1"); } }, //Change later
             { typeof(ConnectionTest2), obj => { Debug.Log("Client received a Test2"); } }
         };
@@ -80,5 +81,15 @@ public class GameClient : MonoBehaviour
 
             functionsDictionary[decodedClass.GetType()](decodedClass);
         }
+    }
+
+    void HandleReceiveNetObjects(Dictionary<int, GameObject> netObjects)
+    {
+        foreach (var entry in netObjects)
+        {
+            Instantiate(entry.Value);
+        }
+
+        ScenesHandler.Singleton.SetReady();
     }
 }

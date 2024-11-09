@@ -1,5 +1,7 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 using UnityEngine;
 using UnityEngine.SceneManagement;
 
@@ -7,9 +9,7 @@ public class ScenesHandler : MonoBehaviour
 {
     public static ScenesHandler Singleton { get; private set; }
 
-    private AsyncOperation sceneLoading;
-
-    [SerializeField] Object loadingScreenPrefab;
+    [SerializeField] UnityEngine.Object loadingScreenPrefab;
     GameObject loadingScreenGO;
 
     private void Awake()
@@ -33,15 +33,14 @@ public class ScenesHandler : MonoBehaviour
         loadingScreenGO = (GameObject)Instantiate(loadingScreenPrefab);
         DontDestroyOnLoad(loadingScreenGO);
 
-        sceneLoading = SceneManager.LoadSceneAsync(sceneName, loadMode);
-        sceneLoading.completed += OnSceneLoaded;
+        //sceneLoading = SceneManager.LoadSceneAsync(sceneName, loadMode);
+        //sceneLoading.completed += (AsyncOperation func) => { PacketHandler.SendPacket(GameClient.Singleton.clientSocket, GameClient.Singleton.serverEndPoint, new SceneLoadedData()); };
+
+        SceneManager.LoadSceneAsync(sceneName, loadMode).completed += (AsyncOperation func) => { PacketHandler.SendPacket(GameClient.Singleton.clientSocket, GameClient.Singleton.serverEndPoint, new SceneLoadedData()); };
     }
 
-    void OnSceneLoaded(AsyncOperation loadingFunction)
+    public void SetReady()
     {
-        sceneLoading = null;
-
         Destroy(loadingScreenGO);
-        Debug.Log("New Scene Loaded");
     }
 }

@@ -31,6 +31,7 @@ public class GameServer : MonoBehaviour
         functionsDictionary = new Dictionary<Type, Action<object, EndPoint>>()
         {
             { typeof(PlayerData), (obj, ep) => { AddUserToDictionary(ep, (PlayerData)obj); } },
+            { typeof(SceneLoadedData), (obj, ep) => { HandleClientSceneLoaded(ep); } },
             { typeof(ConnectionTest1), (obj, ep) => { Debug.Log("Server received a Test1 from " + connectedUsers[ep]); BroadCastPacket((ConnectionTest1)obj, ep); } }, //Change later
             { typeof(ConnectionTest2), (obj, ep) => { Debug.Log("Server received a Test2 from " + connectedUsers[ep]); BroadCastPacket((ConnectionTest2)obj, ep);} }
         };
@@ -83,5 +84,14 @@ public class GameServer : MonoBehaviour
     void AddUserToDictionary(EndPoint ep, PlayerData playerData)
     {
         connectedUsers.Add(ep, playerData.Username);
+    }
+
+    void HandleClientSceneLoaded(EndPoint ep)
+    {
+        //GameObject playerCharacter = (GameObject)Instantiate(playerPrefab);
+        //netObjects.Add(playerCharacter.GetInstanceID(), playerCharacter);
+
+        //IPEndPoint ipep = new IPEndPoint(ep.GetIP(), ep.GetPort());
+        //PacketHandler.SendPacket(serverSocket, ipep, netObjects);
     }
 }

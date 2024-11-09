@@ -29,6 +29,10 @@ public class ConnectionTest2
     public Vector3 _position;
 }
 
+public struct SceneLoadedData
+{
+    //To fill later
+}
 
 public static class PacketHandler
 {
@@ -38,6 +42,7 @@ public static class PacketHandler
         Test1,
         Test2,
         PlayerData,
+        SceneLoadedData,
         EntityPlayer,
         EntityEnemy
     }
@@ -45,6 +50,7 @@ public static class PacketHandler
     static Dictionary<Type, PacketType> encodeTypes = new Dictionary<Type, PacketType>()
     {
         {typeof(object),            PacketType.None}, // Acts as the "null" equivalent
+        {typeof(SceneLoadedData),   PacketType.SceneLoadedData},
         {typeof(ConnectionTest1),   PacketType.Test1}, //Change later
         {typeof(ConnectionTest2),   PacketType.Test2}, //Change later
         {typeof(PlayerData),        PacketType.PlayerData}
@@ -52,6 +58,7 @@ public static class PacketHandler
     static Dictionary<PacketType, Type> decodeTypes = new Dictionary<PacketType, Type>()
     {
         {PacketType.None,           typeof(object)}, // Acts as the "null" equivalent
+        {PacketType.SceneLoadedData,typeof(SceneLoadedData)}, 
         {PacketType.Test1,          typeof(ConnectionTest1)}, //Change later
         {PacketType.Test2,          typeof(ConnectionTest2)}, //Change later
         {PacketType.PlayerData,     typeof(PlayerData)}
