@@ -12,6 +12,8 @@ public class ScenesHandler : MonoBehaviour
     [SerializeField] UnityEngine.Object loadingScreenPrefab;
     GameObject loadingScreenGO;
 
+    bool loadingScreenReady = false;
+
     private void Awake()
     {
         // If there is an instance, and it's not me, delete myself.
@@ -28,6 +30,15 @@ public class ScenesHandler : MonoBehaviour
         DontDestroyOnLoad(this.gameObject);
     }
 
+    private void Update()
+    {
+        if (loadingScreenReady)
+        {
+            Destroy(loadingScreenGO);
+            loadingScreenReady = false;
+        }
+    }
+
     public void LoadScene(string sceneName, LoadSceneMode loadMode)
     {
         loadingScreenGO = (GameObject)Instantiate(loadingScreenPrefab);
@@ -41,6 +52,6 @@ public class ScenesHandler : MonoBehaviour
 
     public void SetReady()
     {
-        Destroy(loadingScreenGO);
+        loadingScreenReady = true;
     }
 }

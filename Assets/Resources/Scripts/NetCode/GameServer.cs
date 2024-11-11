@@ -15,6 +15,8 @@ public class GameServer : MonoBehaviour
     Dictionary<EndPoint, string> connectedUsers = new Dictionary<EndPoint, string>();
     Dictionary<Type, Action<object, EndPoint>> functionsDictionary;
 
+    NetObjectsHandler netObjsHandler;
+
     private void Awake()
     {
         if (Singleton != null && Singleton != this)
@@ -47,6 +49,8 @@ public class GameServer : MonoBehaviour
         //Start a new thread to receive messages.
         Thread mainThread = new Thread(Receive);
         mainThread.Start();
+
+        netObjsHandler = gameObject.GetComponent<NetObjectsHandler>();
     }
 
     void Receive()
@@ -88,10 +92,9 @@ public class GameServer : MonoBehaviour
 
     void HandleClientSceneLoaded(EndPoint ep)
     {
-        //GameObject playerCharacter = (GameObject)Instantiate(playerPrefab);
-        //netObjects.Add(playerCharacter.GetInstanceID(), playerCharacter);
+        netObjsHandler.InstantiateNetObject(new PlayerWrapper());
 
-        //IPEndPoint ipep = new IPEndPoint(ep.GetIP(), ep.GetPort());
-        //PacketHandler.SendPacket(serverSocket, ipep, netObjects);
+        IPEndPoint ipep = new IPEndPoint(ep.GetIP(), ep.GetPort());
+        PacketHandler.SendPacket(serverSocket, ipep, PacketHandler.EncodeDictionary(netObjsHandler.netObjects));
     }
 }

@@ -1,57 +1,9 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-[Serializable]
-public class BaseWrapper
-{
-    public int id;
-}
-
-[Serializable] public class TestWrapper : BaseWrapper
-{
-    public TestWrapper(int instance)
-    {
-        mondongo = instance;
-    }
-
-    public int mondongo;
-}
-[Serializable] public class TestWrapper2 : BaseWrapper
-{
-    public TestWrapper2(int instance)
-    {
-        mondongo2 = instance;
-    }
-
-    public int mondongo2;
-}
-
-[Serializable]
-public class DictWrapper2
-{
-    public DictWrapper2(Dictionary<int, string> dict, int num, List<BaseWrapper> intlist)
-    {
-        dictionary = dict;
-        myNum = num;
-        myintlist = intlist;
-    }
-
-    public Dictionary<int, string> dictionary;
-    public int myNum;
-    public List<BaseWrapper> myintlist;
-}
-
 public class NetObjectsHandler : MonoBehaviour
 {
-    enum WrapperTypes
-    {
-        None,
-        Player,
-        Test
-    }
-
     Dictionary<Type, string> prefabPaths = new Dictionary<Type, string>()
     {
         { typeof(object),        "" },
@@ -60,45 +12,52 @@ public class NetObjectsHandler : MonoBehaviour
 
     public Dictionary<int, object> netObjects = new Dictionary<int, object>();
 
-    Dictionary<int, string> dick = new Dictionary<int, string>();
+    List<(int, object)> netObjectsQueue = new List<(int, object)>();
 
-    private void Awake()
+    private void Update()
     {
-        TestWrapper elem1 = new TestWrapper(3);
-        TestWrapper2 elem2 = new TestWrapper2(4);
-
-        //netObjects.Add(123456, elem1);
-        //netObjects.Add(696969, elem2);
-
-        dick.Add(23, "Mondongo");
-        dick.Add(69, "Bobo");
-
-        List<BaseWrapper> mon = new List<BaseWrapper>() { elem1, elem2 };
-
-        DictWrapper2 elem3 = new DictWrapper2(dick, 69, mon);
-
-        string json = JsonUtility.ToJson(elem3);
-
-        Debug.Log(json);
+        if (netObjectsQueue.Count > 0)
+        {
+            foreach (var obj in netObjectsQueue)
+            {
+                InternalInstantiate(obj.Item1, obj.Item2);
+            }
+            netObjectsQueue.Clear();
+        }
     }
 
-    List<object> SerializeDict(Dictionary<int, object> netObjs)
+    public void CheckNetObjects(Dictionary<int, object> receivedDictionary)
     {
-        List<object> objsList = new List<object>();
-
-        foreach (var item in netObjects)
+        foreach (var entry in receivedDictionary)
         {
-            objsList.Add(item);
+            if (netObjects.ContainsKey(entry.Key))
+            {
+                //Update object
+            }
+            else
+            {
+                InstantiateNetObject(entry.Value, entry.Key);
+            }
+        }
+    }
+
+    public void InstantiateNetObject(object objectToInstantiate, int netID = 0)
+    {
+        netObjectsQueue.Add((netID, objectToInstantiate));
+    }
+    private void InternalInstantiate(int netID, object objectToInstantiate)
+    {
+        GameObject newNetObj = (GameObject)Instantiate(Resources.Load("Prefabs/" + prefabPaths[objectToInstantiate.GetType()]));
+
+        if (netID == 0) 
+        { 
+            newNetObj.GetComponent<NetObject>().netID = newNetObj.GetInstanceID();
+            netObjects.Add(netID, objectToInstantiate);
+            return; 
         }
 
-        return objsList;
-    }
-
-    void InstantiateNetObjects(/*list*/)
-    {
-        //foreach (var item in /*list*/)
-        //{
-        //    Instantiate(Resources.Load("Prefabs/" + prefabPaths[/*PrefabTypes*/]));
-        //}
+        //Temporary
+        PlayerWrapper objInfo = (PlayerWrapper)objectToInstantiate;
+        newNetObj.GetComponent<NetObject>().netID = objInfo.NetID;
     }
 }

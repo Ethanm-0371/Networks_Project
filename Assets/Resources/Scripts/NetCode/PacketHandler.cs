@@ -43,8 +43,7 @@ public static class PacketHandler
         Test2,
         PlayerData,
         SceneLoadedData,
-        EntityPlayer,
-        EntityEnemy
+        netObjsDictionary,
     }
 
     static Dictionary<Type, PacketType> encodeTypes = new Dictionary<Type, PacketType>()
@@ -103,6 +102,8 @@ public static class PacketHandler
         reader.Close();
         stream.Close();
 
+        if (type == PacketType.netObjsDictionary) { return JsonToDictionary(json); }
+
         return JsonUtility.FromJson(json, decodeTypes[type]);
     }
 
@@ -110,5 +111,82 @@ public static class PacketHandler
     {
         byte[] data = EncodeData(encodeTypes[typeof(T)], classInstance);
         senderSocket.SendTo(data, data.Length, SocketFlags.None, targetEndPoint);
+    }
+    public static void SendPacket(Socket senderSocket, IPEndPoint targetEndPoint, byte[] data)
+    {
+        senderSocket.SendTo(data, data.Length, SocketFlags.None, targetEndPoint);
+    }
+
+    [Serializable]
+    public class DictionaryEntryWrapper
+    {
+        public int _key;
+        public string _valueType;
+        public string _valueJSON;
+
+        public DictionaryEntryWrapper(int key, string valueType, string valueJSON)
+        {
+            _key = key;
+            _valueType = valueType;
+            _valueJSON = valueJSON;
+        }
+    }
+    [Serializable]
+    public class DictionaryListWrapper
+    {
+        public List<DictionaryEntryWrapper> _list;
+
+        public DictionaryListWrapper(List<DictionaryEntryWrapper> list)
+        {
+            _list = list;
+        }
+    }
+
+    public static byte[] EncodeDictionary(Dictionary<int, object> dictionaryToEncode)
+    {
+        List<DictionaryEntryWrapper> dictionaryList = new List<DictionaryEntryWrapper>();
+
+        foreach (var item in dictionaryToEncode)
+        {
+            dictionaryList.Add(new DictionaryEntryWrapper(item.Key, item.Value.GetType().Name, JsonUtility.ToJson(item.Value)));
+        }
+
+        DictionaryListWrapper wrapper = new DictionaryListWrapper(dictionaryList);
+        string json = JsonUtility.ToJson(wrapper);
+
+        MemoryStream stream = new MemoryStream();
+        BinaryWriter writer = new BinaryWriter(stream);
+        writer.Write(json);
+
+        byte[] data = stream.ToArray();
+
+        writer.Close();
+        stream.Close();
+
+        if (data.Length > 1023) { Debug.LogWarning("Packet data is bigger than max size"); }
+
+        byte[] result = new byte[1024];
+        result[0] = (byte)PacketType.netObjsDictionary;
+
+        Buffer.BlockCopy(data, 0, result, 1, data.Length);
+        return result;
+    }
+    public static Dictionary<int, object> JsonToDictionary(string json)
+    {
+        DictionaryListWrapper wrapper = JsonUtility.FromJson<DictionaryListWrapper>(json);
+
+        var dictionary = new Dictionary<int, object>();
+
+        foreach (var entry in wrapper._list)
+        {
+            Type type = Type.GetType(entry._valueType);
+
+            object obj = JsonUtility.FromJson(entry._valueJSON, type);
+
+            //dictionary[entry._key] = value; //Works as well
+            dictionary.Add(entry._key, obj);
+        }
+
+        return dictionary;
     }
 }

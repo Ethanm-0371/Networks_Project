@@ -14,6 +14,8 @@ public class GameClient : MonoBehaviour
     public IPEndPoint serverEndPoint;
     Dictionary<Type, Action<object>> functionsDictionary;
 
+    NetObjectsHandler netObjsHandler;
+
     private void Awake()
     {
         if (Singleton != null && Singleton != this)
@@ -29,10 +31,12 @@ public class GameClient : MonoBehaviour
 
         functionsDictionary = new Dictionary<Type, Action<object>>()
         {
-            { typeof(Dictionary<int, GameObject>), obj => { HandleReceiveNetObjects((Dictionary<int, GameObject>)obj); } }, //Change later
+            { typeof(Dictionary<int, object>), obj => { HandleReceiveNetObjects((Dictionary<int, object>)obj); } }, //Change later
             { typeof(ConnectionTest1), obj => { Debug.Log("Client received a Test1"); } }, //Change later
             { typeof(ConnectionTest2), obj => { Debug.Log("Client received a Test2"); } }
         };
+
+        netObjsHandler = gameObject.AddComponent<NetObjectsHandler>();
     }
     private void Update()
     {
@@ -83,12 +87,9 @@ public class GameClient : MonoBehaviour
         }
     }
 
-    void HandleReceiveNetObjects(Dictionary<int, GameObject> netObjects)
+    void HandleReceiveNetObjects(Dictionary<int, object> netObjects)
     {
-        foreach (var entry in netObjects)
-        {
-            Instantiate(entry.Value);
-        }
+        netObjsHandler.CheckNetObjects(netObjects);
 
         ScenesHandler.Singleton.SetReady();
     }

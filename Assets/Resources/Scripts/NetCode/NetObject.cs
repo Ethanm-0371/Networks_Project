@@ -4,11 +4,5 @@ using UnityEngine;
 
 public class NetObject : MonoBehaviour
 {
-    public int netID { get; private set; }
-    public string prefabPath { get; private set; }
-
-    private void Awake()
-    {
-        //prefabPath = getasset
-    }
+    public int netID { get; set; }
 }
