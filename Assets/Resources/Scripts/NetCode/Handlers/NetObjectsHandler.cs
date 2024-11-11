@@ -32,14 +32,14 @@ public class NetObjectsHandler : MonoBehaviour
         foreach (var entry in receivedDictionary)
         {
             PlayerWrapper pw = (PlayerWrapper)entry.Value;
-            if (pw.id == 0) // Checks if the wrapper netID exists (temporary)
+
+            if (netObjects.ContainsKey(entry.Key) && pw.id != 0)
             {
-                netObjectsQueue.Add((entry.Key, entry.Value));
+                //Update object
             }
             else
             {
-                //Update object
-
+                netObjectsQueue.Add((entry.Key, entry.Value));
             }
         }
     }
@@ -53,10 +53,11 @@ public class NetObjectsHandler : MonoBehaviour
     {
         Type thing = objectToInstantiate.GetType();
         GameObject newNetObj = (GameObject)Instantiate(Resources.Load("Prefabs/" + prefabPaths[thing]));
-        newNetObj.GetComponent<NetObject>().netID = netID;
+        newNetObj.GetComponent<PlayerBehaviour>().netID = netID;
 
         //Temporary
-        netObjects[netID] = new PlayerWrapper(newNetObj.GetComponent<PlayerBehaviour>());
+        PlayerWrapper filledWrapper = new PlayerWrapper(newNetObj.GetComponent<PlayerBehaviour>());
+        netObjects[netID] = filledWrapper;
 
     }
 

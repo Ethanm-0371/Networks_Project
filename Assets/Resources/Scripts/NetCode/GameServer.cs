@@ -84,6 +84,17 @@ public class GameServer : MonoBehaviour
             PacketHandler.SendPacket(serverSocket, ipep, packetToSend);
         }
     }
+    void BroadCastPacket(byte[] packetToSend, EndPoint sender)
+    {
+        foreach (var user in connectedUsers)
+        {
+            if (user.Key.GetIP().ToString() == sender.GetIP().ToString() &&
+               user.Key.GetPort() == sender.GetPort()) { continue; }
+
+            IPEndPoint ipep = new IPEndPoint(user.Key.GetIP(), user.Key.GetPort());
+            PacketHandler.SendPacket(serverSocket, ipep, packetToSend);
+        }
+    }
 
     void AddUserToDictionary(EndPoint ep, PlayerData playerData)
     {
@@ -95,6 +106,9 @@ public class GameServer : MonoBehaviour
         netObjsHandler.AddNetObject(new PlayerWrapper(), netObjsHandler.GenerateRandomID());
 
         IPEndPoint ipep = new IPEndPoint(ep.GetIP(), ep.GetPort());
-        PacketHandler.SendPacket(serverSocket, ipep, PacketHandler.EncodeDictionary(netObjsHandler.netObjects));
+
+        byte[] encodedDictionary = PacketHandler.EncodeDictionary(netObjsHandler.netObjects);
+        PacketHandler.SendPacket(serverSocket, ipep, encodedDictionary);
+        BroadCastPacket(encodedDictionary, ep);
     }
 }
