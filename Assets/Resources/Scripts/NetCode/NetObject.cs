@@ -4,5 +4,5 @@ using UnityEngine;
 
 public class NetObject : MonoBehaviour
 {
-    public int netID { get; set; }
+    public uint netID { get; set; }
 }

@@ -92,7 +92,7 @@ public class GameServer : MonoBehaviour
 
     void HandleClientSceneLoaded(EndPoint ep)
     {
-        netObjsHandler.InstantiateNetObject(new PlayerWrapper());
+        netObjsHandler.AddNetObject(new PlayerWrapper(), netObjsHandler.GenerateRandomID());
 
         IPEndPoint ipep = new IPEndPoint(ep.GetIP(), ep.GetPort());
         PacketHandler.SendPacket(serverSocket, ipep, PacketHandler.EncodeDictionary(netObjsHandler.netObjects));

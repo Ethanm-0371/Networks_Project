@@ -10,12 +10,13 @@ public class NetObjectsHandler : MonoBehaviour
         { typeof(PlayerWrapper), "PlayerPrefab" },
     };
 
-    public Dictionary<int, object> netObjects = new Dictionary<int, object>();
+    public Dictionary<uint, object> netObjects = new Dictionary<uint, object>();
 
-    List<(int, object)> netObjectsQueue = new List<(int, object)>();
+    List<(uint, object)> netObjectsQueue = new List<(uint, object)>();
 
     private void Update()
     {
+        //TO DO: Lock queue
         if (netObjectsQueue.Count > 0)
         {
             foreach (var obj in netObjectsQueue)
@@ -26,38 +27,54 @@ public class NetObjectsHandler : MonoBehaviour
         }
     }
 
-    public void CheckNetObjects(Dictionary<int, object> receivedDictionary)
+    public void CheckNetObjects(Dictionary<uint, object> receivedDictionary)
     {
         foreach (var entry in receivedDictionary)
         {
-            if (netObjects.ContainsKey(entry.Key))
+            PlayerWrapper pw = (PlayerWrapper)entry.Value;
+            if (pw.id == 0) // Checks if the wrapper netID exists (temporary)
             {
-                //Update object
+                netObjectsQueue.Add((entry.Key, entry.Value));
             }
             else
             {
-                InstantiateNetObject(entry.Value, entry.Key);
+                //Update object
+
             }
         }
     }
 
-    public void InstantiateNetObject(object objectToInstantiate, int netID = 0)
+    public void AddNetObject(object obj, uint netID)
     {
-        netObjectsQueue.Add((netID, objectToInstantiate));
+        netObjects.Add(netID, obj);
     }
-    private void InternalInstantiate(int netID, object objectToInstantiate)
-    {
-        GameObject newNetObj = (GameObject)Instantiate(Resources.Load("Prefabs/" + prefabPaths[objectToInstantiate.GetType()]));
 
-        if (netID == 0) 
-        { 
-            newNetObj.GetComponent<NetObject>().netID = newNetObj.GetInstanceID();
-            netObjects.Add(netID, objectToInstantiate);
-            return; 
-        }
+    private void InternalInstantiate(uint netID, object objectToInstantiate)
+    {
+        Type thing = objectToInstantiate.GetType();
+        GameObject newNetObj = (GameObject)Instantiate(Resources.Load("Prefabs/" + prefabPaths[thing]));
+        newNetObj.GetComponent<NetObject>().netID = netID;
 
         //Temporary
-        PlayerWrapper objInfo = (PlayerWrapper)objectToInstantiate;
-        newNetObj.GetComponent<NetObject>().netID = objInfo.NetID;
+        netObjects[netID] = new PlayerWrapper(newNetObj.GetComponent<PlayerBehaviour>());
+
+    }
+
+    public uint GenerateRandomID()
+    {
+        byte[] buffer = new byte[4];
+        System.Random random = new System.Random();
+        uint id;
+
+        do
+        {
+            random.NextBytes(buffer);
+            id = BitConverter.ToUInt32(buffer, 0);
+
+        } while (netObjects.ContainsKey(id));
+
+        // Convert the byte array to a uint
+        return id;
+
     }
 }

@@ -4,16 +4,17 @@ using UnityEngine;
 
 struct PlayerWrapper
 {
-    PlayerWrapper(PlayerBehaviour instance)
+    public PlayerWrapper(PlayerBehaviour instance)
     {
-        NetID = instance.netID;
-        position = instance.transform.position;
-        rotation = instance.transform.rotation;
+        id = instance.netID;
+        p = instance.transform.position;
+        r = instance.transform.rotation;
     }
 
-    public int NetID;
-    public Vector3 position;
-    public Quaternion rotation;
+    // Shortened names equals more space to add in buffer
+    public uint id;
+    public Vector3 p;
+    public Quaternion r;
 }
 
 public class PlayerBehaviour : NetObject

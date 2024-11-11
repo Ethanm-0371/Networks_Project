@@ -31,7 +31,7 @@ public class GameClient : MonoBehaviour
 
         functionsDictionary = new Dictionary<Type, Action<object>>()
         {
-            { typeof(Dictionary<int, object>), obj => { HandleReceiveNetObjects((Dictionary<int, object>)obj); } }, //Change later
+            { typeof(Dictionary<uint, object>), obj => { HandleReceiveNetObjects((Dictionary<uint, object>)obj); } }, //Change later
             { typeof(ConnectionTest1), obj => { Debug.Log("Client received a Test1"); } }, //Change later
             { typeof(ConnectionTest2), obj => { Debug.Log("Client received a Test2"); } }
         };
@@ -87,7 +87,7 @@ public class GameClient : MonoBehaviour
         }
     }
 
-    void HandleReceiveNetObjects(Dictionary<int, object> netObjects)
+    void HandleReceiveNetObjects(Dictionary<uint, object> netObjects)
     {
         netObjsHandler.CheckNetObjects(netObjects);
 

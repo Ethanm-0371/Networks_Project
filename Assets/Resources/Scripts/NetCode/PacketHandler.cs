@@ -120,11 +120,11 @@ public static class PacketHandler
     [Serializable]
     public class DictionaryEntryWrapper
     {
-        public int _key;
+        public uint _key;
         public string _valueType;
         public string _valueJSON;
 
-        public DictionaryEntryWrapper(int key, string valueType, string valueJSON)
+        public DictionaryEntryWrapper(uint key, string valueType, string valueJSON)
         {
             _key = key;
             _valueType = valueType;
@@ -142,7 +142,7 @@ public static class PacketHandler
         }
     }
 
-    public static byte[] EncodeDictionary(Dictionary<int, object> dictionaryToEncode)
+    public static byte[] EncodeDictionary(Dictionary<uint, object> dictionaryToEncode)
     {
         List<DictionaryEntryWrapper> dictionaryList = new List<DictionaryEntryWrapper>();
 
@@ -171,11 +171,11 @@ public static class PacketHandler
         Buffer.BlockCopy(data, 0, result, 1, data.Length);
         return result;
     }
-    public static Dictionary<int, object> JsonToDictionary(string json)
+    public static Dictionary<uint, object> JsonToDictionary(string json)
     {
         DictionaryListWrapper wrapper = JsonUtility.FromJson<DictionaryListWrapper>(json);
 
-        var dictionary = new Dictionary<int, object>();
+        var dictionary = new Dictionary<uint, object>();
 
         foreach (var entry in wrapper._list)
         {
