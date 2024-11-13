@@ -12,12 +12,14 @@ public class GameClient : MonoBehaviour
 
     public Socket clientSocket;
     public IPEndPoint serverEndPoint;
-    Dictionary<Type, Action<object>> functionsDictionary;
+    Dictionary<PacketType, Action<object>> functionsDictionary;
 
     NetObjectsHandler netObjsHandler;
 
     private void Awake()
     {
+        #region Singleton
+
         if (Singleton != null && Singleton != this)
         {
             Destroy(this.gameObject);
@@ -29,27 +31,14 @@ public class GameClient : MonoBehaviour
 
         DontDestroyOnLoad(this.gameObject);
 
-        functionsDictionary = new Dictionary<Type, Action<object>>()
-        {
-            { typeof(Dictionary<uint, object>), obj => { HandleReceiveNetObjects((Dictionary<uint, object>)obj); } }, //Change later
-            { typeof(ConnectionTest1), obj => { Debug.Log("Client received a Test1"); } }, //Change later
-            { typeof(ConnectionTest2), obj => { Debug.Log("Client received a Test2"); } }
-        };
+        #endregion
+
+        StartClientFunctions();
 
         netObjsHandler = gameObject.AddComponent<NetObjectsHandler>();
     }
     private void Update()
     {
-        if(Input.GetKeyDown(KeyCode.Alpha1))
-        {
-            PacketHandler.SendPacket(clientSocket, serverEndPoint, new ConnectionTest1(7, "Mondongo")); //Debug only
-            Debug.Log("Client sent a Test1");
-        }
-        if (Input.GetKeyDown(KeyCode.Alpha2))
-        {
-            PacketHandler.SendPacket(clientSocket, serverEndPoint, new ConnectionTest2("Goku calvo", Vector3.one)); //Debug only
-            Debug.Log("Client sent a Test2");
-        }
         if (Input.GetKeyDown(KeyCode.Backspace))
         {
             ScenesHandler.Singleton.LoadScene("Main_Menu", UnityEngine.SceneManagement.LoadSceneMode.Single);
@@ -62,7 +51,7 @@ public class GameClient : MonoBehaviour
         serverEndPoint = new IPEndPoint(IPAddress.Parse(ip), 9050); //Change port to another inputfield
 
         //Handshake
-        PacketHandler.SendPacket(clientSocket, serverEndPoint, new PlayerData(username));
+        PacketHandler.SendPacket(clientSocket, serverEndPoint, PacketType.PlayerData, new PlayerData(username));
 
         Thread receive = new Thread(Receive);
         receive.Start();
@@ -81,10 +70,18 @@ public class GameClient : MonoBehaviour
 
             if (recv == 0) { continue; }
 
-            var decodedClass = PacketHandler.DecodeData(data);
+            (PacketType, object) decodedClass = PacketHandler.DecodeData(data);
 
-            functionsDictionary[decodedClass.GetType()](decodedClass);
+            functionsDictionary[decodedClass.Item1](decodedClass.Item2);
         }
+    }
+
+    void StartClientFunctions()
+    {
+        functionsDictionary = new Dictionary<PacketType, Action<object>>()
+        {
+            { PacketType.netObjsDictionary, obj => { HandleReceiveNetObjects((Dictionary<uint, object>)obj); } },
+        };
     }
 
     void HandleReceiveNetObjects(Dictionary<uint, object> netObjects)

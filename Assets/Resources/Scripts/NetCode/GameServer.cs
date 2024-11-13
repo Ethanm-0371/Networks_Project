@@ -13,12 +13,14 @@ public class GameServer : MonoBehaviour
 
     Socket serverSocket;
     Dictionary<EndPoint, string> connectedUsers = new Dictionary<EndPoint, string>();
-    Dictionary<Type, Action<object, EndPoint>> functionsDictionary;
+    Dictionary<PacketType, Action<object, EndPoint>> functionsDictionary;
 
     NetObjectsHandler netObjsHandler;
 
     private void Awake()
     {
+        #region Singleton
+
         if (Singleton != null && Singleton != this)
         {
             Destroy(this.gameObject);
@@ -30,13 +32,9 @@ public class GameServer : MonoBehaviour
 
         DontDestroyOnLoad(this.gameObject);
 
-        functionsDictionary = new Dictionary<Type, Action<object, EndPoint>>()
-        {
-            { typeof(PlayerData), (obj, ep) => { AddUserToDictionary(ep, (PlayerData)obj); } },
-            { typeof(SceneLoadedData), (obj, ep) => { HandleClientSceneLoaded(ep); } },
-            { typeof(ConnectionTest1), (obj, ep) => { Debug.Log("Server received a Test1 from " + connectedUsers[ep]); BroadCastPacket((ConnectionTest1)obj, ep); } }, //Change later
-            { typeof(ConnectionTest2), (obj, ep) => { Debug.Log("Server received a Test2 from " + connectedUsers[ep]); BroadCastPacket((ConnectionTest2)obj, ep);} }
-        };
+        #endregion
+
+        StartServerFunctions();
     }
 
     public void Init()
@@ -67,13 +65,13 @@ public class GameServer : MonoBehaviour
 
             if (recv == 0) { continue; }
 
-            var decodedClass = PacketHandler.DecodeData(data);
+            (PacketType, object) decodedClass = PacketHandler.DecodeData(data);
 
-            functionsDictionary[decodedClass.GetType()](decodedClass, Remote);
+            functionsDictionary[decodedClass.Item1](decodedClass.Item2, Remote);
         }
     }
 
-    void BroadCastPacket<T>(T packetToSend, EndPoint sender)
+    void BroadCastPacket<T>(PacketType type, T packetToSend, EndPoint sender)
     {
         foreach (var user in connectedUsers)
         {
@@ -81,7 +79,7 @@ public class GameServer : MonoBehaviour
                user.Key.GetPort() == sender.GetPort()) { continue; }
 
             IPEndPoint ipep = new IPEndPoint(user.Key.GetIP(), user.Key.GetPort());
-            PacketHandler.SendPacket(serverSocket, ipep, packetToSend);
+            PacketHandler.SendPacket(serverSocket, ipep, type, packetToSend);
         }
     }
     void BroadCastPacket(byte[] packetToSend, EndPoint sender)
@@ -94,6 +92,15 @@ public class GameServer : MonoBehaviour
             IPEndPoint ipep = new IPEndPoint(user.Key.GetIP(), user.Key.GetPort());
             PacketHandler.SendPacket(serverSocket, ipep, packetToSend);
         }
+    }
+
+    void StartServerFunctions()
+    {
+        functionsDictionary = new Dictionary<PacketType, Action<object, EndPoint>>()
+        {
+            { PacketType.PlayerData, (obj, ep) => { AddUserToDictionary(ep, (PlayerData)obj); } },
+            { PacketType.SceneLoadedFlag, (obj, ep) => { HandleClientSceneLoaded(ep); } },
+        };
     }
 
     void AddUserToDictionary(EndPoint ep, PlayerData playerData)

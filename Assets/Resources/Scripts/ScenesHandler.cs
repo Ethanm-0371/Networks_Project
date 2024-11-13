@@ -16,7 +16,7 @@ public class ScenesHandler : MonoBehaviour
 
     private void Awake()
     {
-        // If there is an instance, and it's not me, delete myself.
+        #region Singleton
 
         if (Singleton != null && Singleton != this)
         {
@@ -28,6 +28,8 @@ public class ScenesHandler : MonoBehaviour
         }
 
         DontDestroyOnLoad(this.gameObject);
+
+        #endregion
     }
 
     private void Update()
@@ -47,7 +49,7 @@ public class ScenesHandler : MonoBehaviour
         //sceneLoading = SceneManager.LoadSceneAsync(sceneName, loadMode);
         //sceneLoading.completed += (AsyncOperation func) => { PacketHandler.SendPacket(GameClient.Singleton.clientSocket, GameClient.Singleton.serverEndPoint, new SceneLoadedData()); };
 
-        SceneManager.LoadSceneAsync(sceneName, loadMode).completed += (AsyncOperation func) => { PacketHandler.SendPacket(GameClient.Singleton.clientSocket, GameClient.Singleton.serverEndPoint, new SceneLoadedData()); };
+        SceneManager.LoadSceneAsync(sceneName, loadMode).completed += (AsyncOperation func) => { PacketHandler.SendPacket(GameClient.Singleton.clientSocket, GameClient.Singleton.serverEndPoint, PacketType.SceneLoadedFlag, new SceneLoadedData()); };
     }
 
     public void SetReady()

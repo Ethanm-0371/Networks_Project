@@ -6,60 +6,25 @@ using System.Net;
 using System.Net.Sockets;
 using UnityEngine;
 
-public class ConnectionTest1
-{
-    public ConnectionTest1(int value, string message)
-    {
-        _value = value;
-        _message = message;
-    }
-
-    public int _value;
-    public string _message;
-}
-public class ConnectionTest2
-{
-    public ConnectionTest2(string name, Vector3 pos)
-    {
-        _name = name;
-        _position = pos;
-    }
-
-    public string _name;
-    public Vector3 _position;
-}
-
 public struct SceneLoadedData
 {
     //To fill later
 }
 
+public enum PacketType
+{
+    None,
+    PlayerData,
+    SceneLoadedFlag,
+    netObjsDictionary,
+}
+
 public static class PacketHandler
 {
-    public enum PacketType
-    {
-        None,
-        Test1,
-        Test2,
-        PlayerData,
-        SceneLoadedData,
-        netObjsDictionary,
-    }
-
-    static Dictionary<Type, PacketType> encodeTypes = new Dictionary<Type, PacketType>()
-    {
-        {typeof(object),            PacketType.None}, // Acts as the "null" equivalent
-        {typeof(SceneLoadedData),   PacketType.SceneLoadedData},
-        {typeof(ConnectionTest1),   PacketType.Test1}, //Change later
-        {typeof(ConnectionTest2),   PacketType.Test2}, //Change later
-        {typeof(PlayerData),        PacketType.PlayerData}
-    };
     static Dictionary<PacketType, Type> decodeTypes = new Dictionary<PacketType, Type>()
     {
         {PacketType.None,           typeof(object)}, // Acts as the "null" equivalent
-        {PacketType.SceneLoadedData,typeof(SceneLoadedData)}, 
-        {PacketType.Test1,          typeof(ConnectionTest1)}, //Change later
-        {PacketType.Test2,          typeof(ConnectionTest2)}, //Change later
+        {PacketType.SceneLoadedFlag,typeof(SceneLoadedData)},
         {PacketType.PlayerData,     typeof(PlayerData)}
     };
 
@@ -85,7 +50,7 @@ public static class PacketHandler
         return result;
     }
 
-    public static object DecodeData(byte[] data)
+    public static (PacketType, object) DecodeData(byte[] data)
     {
         PacketType type = (PacketType)data[0];
 
@@ -102,14 +67,14 @@ public static class PacketHandler
         reader.Close();
         stream.Close();
 
-        if (type == PacketType.netObjsDictionary) { return JsonToDictionary(json); }
+        if (type == PacketType.netObjsDictionary) { return (type, JsonToDictionary(json)); }
 
-        return JsonUtility.FromJson(json, decodeTypes[type]);
+        return (type, JsonUtility.FromJson(json, decodeTypes[type]));
     }
 
-    public static void SendPacket<T>(Socket senderSocket, IPEndPoint targetEndPoint, T classInstance)
+    public static void SendPacket<T>(Socket senderSocket, IPEndPoint targetEndPoint, PacketType type, T classInstance)
     {
-        byte[] data = EncodeData(encodeTypes[typeof(T)], classInstance);
+        byte[] data = EncodeData(type, classInstance);
         senderSocket.SendTo(data, data.Length, SocketFlags.None, targetEndPoint);
     }
     public static void SendPacket(Socket senderSocket, IPEndPoint targetEndPoint, byte[] data)
