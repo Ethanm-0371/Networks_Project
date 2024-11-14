@@ -12,6 +12,9 @@ public class GameClient : MonoBehaviour
 
     public Socket clientSocket;
     public IPEndPoint serverEndPoint;
+
+    public string userName;
+
     Dictionary<PacketType, Action<object>> functionsDictionary;
 
     NetObjectsHandler netObjsHandler;
@@ -52,6 +55,7 @@ public class GameClient : MonoBehaviour
 
         //Handshake
         PacketHandler.SendPacket(clientSocket, serverEndPoint, PacketType.PlayerData, new PlayerData(username));
+        userName = username;
 
         Thread receive = new Thread(Receive);
         receive.Start();
@@ -81,7 +85,6 @@ public class GameClient : MonoBehaviour
         functionsDictionary = new Dictionary<PacketType, Action<object>>()
         {
             { PacketType.netObjsDictionary, obj => { HandleReceiveNetObjects((Dictionary<uint, object>)obj); } },
-            { PacketType.AssignOwnership, obj => { AssignPlayerOwnership((uint)obj); } },
         };
     }
 
@@ -90,10 +93,5 @@ public class GameClient : MonoBehaviour
         netObjsHandler.CheckNetObjects(netObjects);
 
         ScenesHandler.Singleton.SetReady();
-    }
-
-    void AssignPlayerOwnership(uint netID)
-    {
-        netObjsHandler.netGameObjects[netID].GetComponent<PlayerBehaviour>().isOwner = true;
     }
 }

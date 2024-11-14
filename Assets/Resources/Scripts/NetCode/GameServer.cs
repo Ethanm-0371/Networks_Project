@@ -6,16 +6,18 @@ using System.Net.Sockets;
 using System.Threading;
 using UnityEngine;
 using CustomExtensions;
+using Wrappers;
 
 public class GameServer : MonoBehaviour
 {
     public static GameServer Singleton { get; private set; }
 
     Socket serverSocket;
-    Dictionary<EndPoint, string> connectedUsers = new Dictionary<EndPoint, string>();
-    Dictionary<PacketType, Action<object, EndPoint>> functionsDictionary;
 
-    NetObjectsHandler netObjsHandler;
+    Dictionary<EndPoint, string> connectedUsers = new Dictionary<EndPoint, string>();
+    public Dictionary<uint, object> netObjectsInfo = new Dictionary<uint, object>();
+
+    Dictionary<PacketType, Action<object, EndPoint>> functionsDictionary;
 
     private void Awake()
     {
@@ -47,8 +49,6 @@ public class GameServer : MonoBehaviour
         //Start a new thread to receive messages.
         Thread mainThread = new Thread(Receive);
         mainThread.Start();
-
-        netObjsHandler = gameObject.GetComponent<NetObjectsHandler>();
     }
 
     void Receive()
@@ -108,17 +108,33 @@ public class GameServer : MonoBehaviour
         connectedUsers.Add(ep, playerData.Username);
     }
 
+    public uint GenerateRandomID()
+    {
+        byte[] buffer = new byte[4];
+        System.Random random = new System.Random();
+        uint id;
+
+        do
+        {
+            random.NextBytes(buffer);
+            id = BitConverter.ToUInt32(buffer, 0);
+
+        } while (netObjectsInfo.ContainsKey(id));
+
+        // Convert the byte array to a uint
+        return id;
+    }
+
     void HandleClientSceneLoaded(EndPoint ep)
     {
-        uint newObjectID = netObjsHandler.GenerateRandomID();
+        uint newObjectID = GenerateRandomID();
 
-        netObjsHandler.AddNetObject(new PlayerWrapper(), newObjectID);
+        netObjectsInfo.Add(newObjectID, new PlayerWrapper(newObjectID, connectedUsers[ep]));
 
         IPEndPoint ipep = new IPEndPoint(ep.GetIP(), ep.GetPort());
 
-        byte[] encodedDictionary = PacketHandler.EncodeDictionary(netObjsHandler.netObjects);
+        byte[] encodedDictionary = PacketHandler.EncodeDictionary(netObjectsInfo);
         PacketHandler.SendPacket(serverSocket, ipep, encodedDictionary);
-        PacketHandler.SendPacket(serverSocket, ipep, PacketType.AssignOwnership, newObjectID);
         BroadCastPacket(encodedDictionary, ep);
     }
 }

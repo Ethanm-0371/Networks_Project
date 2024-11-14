@@ -27,7 +27,6 @@ public static class PacketHandler
         {PacketType.None,           typeof(object)}, // Acts as the "null" equivalent
         {PacketType.SceneLoadedFlag,typeof(SceneLoadedData)},
         {PacketType.PlayerData,     typeof(PlayerData)},
-        {PacketType.AssignOwnership,typeof(uint)}
     };
 
     private static byte[] EncodeData<T>(PacketType type, T classToEncode)
@@ -146,7 +145,7 @@ public static class PacketHandler
 
         foreach (var entry in wrapper._list)
         {
-            Type type = Type.GetType(entry._valueType);
+            Type type = Type.GetType($"Wrappers.{entry._valueType}");
 
             object obj = JsonUtility.FromJson(entry._valueJSON, type);
 

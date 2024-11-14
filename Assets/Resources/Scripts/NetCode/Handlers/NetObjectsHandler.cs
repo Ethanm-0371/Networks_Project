@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
+using Wrappers;
 
 public class NetObjectsHandler : MonoBehaviour
 {
@@ -10,21 +11,30 @@ public class NetObjectsHandler : MonoBehaviour
         { typeof(PlayerWrapper), "PlayerPrefab" },
     };
 
-    public Dictionary<uint, object> netObjects = new Dictionary<uint, object>();
     public Dictionary<uint, GameObject> netGameObjects = new Dictionary<uint, GameObject>();
 
-    List<(uint, object)> netObjectsQueue = new List<(uint, object)>();
+    List<(uint, object)> netObjectsToInstantiate = new List<(uint, object)>();  //Change to queue structure for performance?
+    List<(uint, object)> netObjectsToUpdate = new List<(uint, object)>();       //Change to queue structure for performance?
 
     private void Update()
     {
         //TO DO: Lock queue
-        if (netObjectsQueue.Count > 0)
+        if (netObjectsToInstantiate.Count > 0)
         {
-            foreach (var obj in netObjectsQueue)
+            foreach (var obj in netObjectsToInstantiate)
             {
                 InternalInstantiate(obj.Item1, obj.Item2);
             }
-            netObjectsQueue.Clear();
+            netObjectsToInstantiate.Clear();
+        }
+
+        if (netObjectsToUpdate.Count > 0)
+        {
+            foreach (var obj in netObjectsToUpdate)
+            {
+                netGameObjects[obj.Item1].GetComponent<NetObject>().UpdateObject(obj.Item2);
+            }
+            netObjectsToUpdate.Clear();
         }
     }
 
@@ -32,53 +42,37 @@ public class NetObjectsHandler : MonoBehaviour
     {
         foreach (var entry in receivedDictionary)
         {
-            PlayerWrapper pw = (PlayerWrapper)entry.Value;
-
-            if (netObjects.ContainsKey(entry.Key) && pw.id != 0)
+            if (netGameObjects.ContainsKey(entry.Key))
             {
-                //THIS MUST BE URGENTLY CHANGED
-                netGameObjects[entry.Key].GetComponent<NetObject>().UpdateObject(pw);
+                netObjectsToUpdate.Add((entry.Key, entry.Value));
             }
             else
             {
-                netObjectsQueue.Add((entry.Key, entry.Value));
+                netObjectsToInstantiate.Add((entry.Key, entry.Value));
             }
         }
     }
 
-    public void AddNetObject(object obj, uint netID)
-    {
-        netObjects.Add(netID, obj);
-    }
-
     private void InternalInstantiate(uint netID, object objectToInstantiate)
     {
-        Type thing = objectToInstantiate.GetType();
-        GameObject newNetObj = (GameObject)Instantiate(Resources.Load("Prefabs/" + prefabPaths[thing]));
-        newNetObj.GetComponent<PlayerBehaviour>().netID = netID;
+        Type objectType = objectToInstantiate.GetType();
+        GameObject newNetObj = (GameObject)Instantiate(Resources.Load("Prefabs/" + prefabPaths[objectType]));
+
+        newNetObj.GetComponent<NetObject>().netID = netID;
         netGameObjects.Add(netID, newNetObj);
 
-        //Temporary
-        PlayerWrapper filledWrapper = new PlayerWrapper(newNetObj.GetComponent<PlayerBehaviour>());
-        netObjects[netID] = filledWrapper;
+        if (objectType == typeof(PlayerWrapper))
+        {
+            InitPlayer(newNetObj, (PlayerWrapper)objectToInstantiate);
+        }
 
     }
 
-    public uint GenerateRandomID()
+    private void InitPlayer(GameObject GO, PlayerWrapper info)
     {
-        byte[] buffer = new byte[4];
-        System.Random random = new System.Random();
-        uint id;
+        if (info.o != GameClient.Singleton.userName) { return; }
 
-        do
-        {
-            random.NextBytes(buffer);
-            id = BitConverter.ToUInt32(buffer, 0);
-
-        } while (netObjects.ContainsKey(id));
-
-        // Convert the byte array to a uint
-        return id;
-
+        GO.GetComponent<PlayerBehaviour>().isOwner = true;
+        //Also set camera and others.
     }
 }
