@@ -49,7 +49,10 @@ public class ScenesHandler : MonoBehaviour
         //sceneLoading = SceneManager.LoadSceneAsync(sceneName, loadMode);
         //sceneLoading.completed += (AsyncOperation func) => { PacketHandler.SendPacket(GameClient.Singleton.clientSocket, GameClient.Singleton.serverEndPoint, new SceneLoadedData()); };
 
-        SceneManager.LoadSceneAsync(sceneName, loadMode).completed += (AsyncOperation func) => { PacketHandler.SendPacket(GameClient.Singleton.clientSocket, GameClient.Singleton.serverEndPoint, PacketType.SceneLoadedFlag, new SceneLoadedData()); };
+        SceneManager.LoadSceneAsync(sceneName, loadMode).completed += (AsyncOperation func) => { PacketHandler.SendPacket(GameClient.Singleton.clientSocket,
+                                                                                                                          GameClient.Singleton.serverEndPoint, 
+                                                                                                                          PacketType.SceneLoadedFlag, 
+                                                                                                                          new SceneLoadedData()); };
     }
 
     public void SetReady()

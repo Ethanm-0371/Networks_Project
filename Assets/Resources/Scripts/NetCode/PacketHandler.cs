@@ -15,6 +15,7 @@ public enum PacketType
 {
     None,
     PlayerData,
+    AssignOwnership,
     SceneLoadedFlag,
     netObjsDictionary,
 }
@@ -25,7 +26,8 @@ public static class PacketHandler
     {
         {PacketType.None,           typeof(object)}, // Acts as the "null" equivalent
         {PacketType.SceneLoadedFlag,typeof(SceneLoadedData)},
-        {PacketType.PlayerData,     typeof(PlayerData)}
+        {PacketType.PlayerData,     typeof(PlayerData)},
+        {PacketType.AssignOwnership,typeof(uint)}
     };
 
     private static byte[] EncodeData<T>(PacketType type, T classToEncode)

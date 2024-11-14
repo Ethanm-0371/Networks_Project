@@ -11,6 +11,7 @@ public class NetObjectsHandler : MonoBehaviour
     };
 
     public Dictionary<uint, object> netObjects = new Dictionary<uint, object>();
+    public Dictionary<uint, GameObject> netGameObjects = new Dictionary<uint, GameObject>();
 
     List<(uint, object)> netObjectsQueue = new List<(uint, object)>();
 
@@ -35,7 +36,8 @@ public class NetObjectsHandler : MonoBehaviour
 
             if (netObjects.ContainsKey(entry.Key) && pw.id != 0)
             {
-                //Update object
+                //THIS MUST BE URGENTLY CHANGED
+                netGameObjects[entry.Key].GetComponent<NetObject>().UpdateObject(pw);
             }
             else
             {
@@ -54,6 +56,7 @@ public class NetObjectsHandler : MonoBehaviour
         Type thing = objectToInstantiate.GetType();
         GameObject newNetObj = (GameObject)Instantiate(Resources.Load("Prefabs/" + prefabPaths[thing]));
         newNetObj.GetComponent<PlayerBehaviour>().netID = netID;
+        netGameObjects.Add(netID, newNetObj);
 
         //Temporary
         PlayerWrapper filledWrapper = new PlayerWrapper(newNetObj.GetComponent<PlayerBehaviour>());

@@ -110,12 +110,15 @@ public class GameServer : MonoBehaviour
 
     void HandleClientSceneLoaded(EndPoint ep)
     {
-        netObjsHandler.AddNetObject(new PlayerWrapper(), netObjsHandler.GenerateRandomID());
+        uint newObjectID = netObjsHandler.GenerateRandomID();
+
+        netObjsHandler.AddNetObject(new PlayerWrapper(), newObjectID);
 
         IPEndPoint ipep = new IPEndPoint(ep.GetIP(), ep.GetPort());
 
         byte[] encodedDictionary = PacketHandler.EncodeDictionary(netObjsHandler.netObjects);
         PacketHandler.SendPacket(serverSocket, ipep, encodedDictionary);
+        PacketHandler.SendPacket(serverSocket, ipep, PacketType.AssignOwnership, newObjectID);
         BroadCastPacket(encodedDictionary, ep);
     }
 }
