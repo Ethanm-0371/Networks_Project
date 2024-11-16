@@ -6,7 +6,6 @@ using System.Net.Sockets;
 using System.Threading;
 using UnityEngine;
 using CustomExtensions;
-using Wrappers;
 
 public class GameServer : MonoBehaviour
 {
@@ -129,7 +128,7 @@ public class GameServer : MonoBehaviour
     {
         uint newObjectID = GenerateRandomID();
 
-        netObjectsInfo.Add(newObjectID, new PlayerWrapper(newObjectID, connectedUsers[ep]));
+        netObjectsInfo.Add(newObjectID, new Wrappers.Player(newObjectID, connectedUsers[ep]));
 
         IPEndPoint ipep = new IPEndPoint(ep.GetIP(), ep.GetPort());
 

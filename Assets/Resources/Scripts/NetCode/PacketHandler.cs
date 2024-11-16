@@ -97,16 +97,6 @@ public static class PacketHandler
             _valueJSON = valueJSON;
         }
     }
-    [Serializable]
-    public class DictionaryListWrapper
-    {
-        public List<DictionaryEntryWrapper> _list;
-
-        public DictionaryListWrapper(List<DictionaryEntryWrapper> list)
-        {
-            _list = list;
-        }
-    }
 
     public static byte[] EncodeDictionary(Dictionary<uint, object> dictionaryToEncode)
     {
@@ -117,7 +107,7 @@ public static class PacketHandler
             dictionaryList.Add(new DictionaryEntryWrapper(item.Key, item.Value.GetType().Name, JsonUtility.ToJson(item.Value)));
         }
 
-        DictionaryListWrapper wrapper = new DictionaryListWrapper(dictionaryList);
+        Wrappers.ListWrapper<DictionaryEntryWrapper> wrapper = new Wrappers.ListWrapper<DictionaryEntryWrapper>(dictionaryList);
         string json = JsonUtility.ToJson(wrapper);
 
         MemoryStream stream = new MemoryStream();
@@ -139,7 +129,7 @@ public static class PacketHandler
     }
     public static Dictionary<uint, object> JsonToDictionary(string json)
     {
-        DictionaryListWrapper wrapper = JsonUtility.FromJson<DictionaryListWrapper>(json);
+        Wrappers.ListWrapper<DictionaryEntryWrapper> wrapper = JsonUtility.FromJson<Wrappers.ListWrapper<DictionaryEntryWrapper>>(json);
 
         var dictionary = new Dictionary<uint, object>();
 

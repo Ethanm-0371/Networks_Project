@@ -1,14 +1,13 @@
 using System;
 using System.Collections.Generic;
 using UnityEngine;
-using Wrappers;
 
 public class NetObjectsHandler : MonoBehaviour
 {
     Dictionary<Type, string> prefabPaths = new Dictionary<Type, string>()
     {
         { typeof(object),        "" },
-        { typeof(PlayerWrapper), "PlayerPrefab" },
+        { typeof(Wrappers.Player), "PlayerPrefab" },
     };
 
     public Dictionary<uint, GameObject> netGameObjects = new Dictionary<uint, GameObject>();
@@ -61,14 +60,14 @@ public class NetObjectsHandler : MonoBehaviour
         newNetObj.GetComponent<NetObject>().netID = netID;
         netGameObjects.Add(netID, newNetObj);
 
-        if (objectType == typeof(PlayerWrapper))
+        if (objectType == typeof(Wrappers.Player))
         {
-            InitPlayer(newNetObj, (PlayerWrapper)objectToInstantiate);
+            InitPlayer(newNetObj, (Wrappers.Player)objectToInstantiate);
         }
 
     }
 
-    private void InitPlayer(GameObject GO, PlayerWrapper info)
+    private void InitPlayer(GameObject GO, Wrappers.Player info)
     {
         if (info.o != GameClient.Singleton.userName) { return; }
 

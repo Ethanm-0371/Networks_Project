@@ -6,6 +6,7 @@ using Wrappers;
 public class PlayerBehaviour : NetObject
 {
     public bool isOwner = false;
+    float moveSpeed = 5f;
 
     private void Update()
     {
@@ -17,21 +18,65 @@ public class PlayerBehaviour : NetObject
 
     void HandleInput()
     {
-        float moveX = Input.GetAxis("Horizontal");
-        float moveZ = Input.GetAxis("Vertical");
-        float moveSpeed = 5f;
+        List<PlayerAction> actionList = new List<PlayerAction>();
 
-        Vector3 move = new Vector3(moveX, 0f, moveZ).normalized;
-
-        if (move.magnitude > 0)
+        if (Input.GetKey(KeyCode.W))
         {
-            transform.Translate(move * moveSpeed * Time.deltaTime, Space.World);
+            actionList.Add(new PlayerAction(PlayerAction.Actions.Move, Vector3.forward));
+        }
+        if (Input.GetKey(KeyCode.S))
+        {
+            actionList.Add(new PlayerAction(PlayerAction.Actions.Move, Vector3.back));
+        }
+        if (Input.GetKey(KeyCode.A))
+        {
+            actionList.Add(new PlayerAction(PlayerAction.Actions.Move, Vector3.left));
+        }
+        if (Input.GetKey(KeyCode.D))
+        {
+            actionList.Add(new PlayerAction(PlayerAction.Actions.Move, Vector3.right));
+        }
+
+        foreach (var action in actionList)
+        {
+            ExecuteAction(action);
+        }
+
+        //Send actions
+    }
+
+    public void ExecuteAction(PlayerAction action)
+    {
+        switch (action.a)
+        {
+            case PlayerAction.Actions.Move:
+                Move((Vector3)action.p[0]);
+                break;
+            case PlayerAction.Actions.Rotate:
+                Rotate((Vector3)action.p[0]);
+                break;
+            case PlayerAction.Actions.None:
+            default:
+                break;
         }
     }
 
+    void Move(Vector3 direction)
+    {
+        if (direction.magnitude > 0)
+        {
+            transform.Translate(direction * moveSpeed * Time.deltaTime, Space.World);
+        }
+    }
+    void Rotate(Vector3 increment)
+    {
+
+    }
+
+    //In the case of the player, this serves as state confirmation
     public override void UpdateObject(object info)
     {
-        PlayerWrapper pw = (PlayerWrapper)info;
+        Wrappers.Player pw = (Wrappers.Player)info;
 
         transform.position = pw.p;
         transform.rotation = pw.r;
