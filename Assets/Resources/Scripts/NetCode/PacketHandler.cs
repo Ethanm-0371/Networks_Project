@@ -18,15 +18,17 @@ public enum PacketType
     AssignOwnership,
     SceneLoadedFlag,
     netObjsDictionary,
+    playerActionsList,
 }
 
 public static class PacketHandler
 {
     static Dictionary<PacketType, Type> decodeTypes = new Dictionary<PacketType, Type>()
     {
-        {PacketType.None,           typeof(object)}, // Acts as the "null" equivalent
-        {PacketType.SceneLoadedFlag,typeof(SceneLoadedData)},
-        {PacketType.PlayerData,     typeof(PlayerData)},
+        {PacketType.None,               typeof(object)}, // Acts as the "null" equivalent
+        {PacketType.SceneLoadedFlag,    typeof(SceneLoadedData)},
+        {PacketType.PlayerData,         typeof(PlayerData)},
+        {PacketType.playerActionsList,  typeof(Wrappers.PlayerActionList)},
     };
 
     private static byte[] EncodeData<T>(PacketType type, T classToEncode)

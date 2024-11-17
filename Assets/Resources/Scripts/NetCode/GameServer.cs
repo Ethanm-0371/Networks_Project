@@ -99,6 +99,7 @@ public class GameServer : MonoBehaviour
         {
             { PacketType.PlayerData, (obj, ep) => { AddUserToDictionary(ep, (PlayerData)obj); } },
             { PacketType.SceneLoadedFlag, (obj, ep) => { HandleClientSceneLoaded(ep); } },
+            { PacketType.playerActionsList, (obj, ep) => { HandlePlayerActions((Wrappers.PlayerActionList)obj, ep); } },
         };
     }
 
@@ -135,5 +136,10 @@ public class GameServer : MonoBehaviour
         byte[] encodedDictionary = PacketHandler.EncodeDictionary(netObjectsInfo);
         PacketHandler.SendPacket(serverSocket, ipep, encodedDictionary);
         BroadCastPacket(encodedDictionary, ep);
+    }
+
+    void HandlePlayerActions(Wrappers.PlayerActionList list, EndPoint senderEP)
+    {
+        BroadCastPacket(PacketType.playerActionsList, list, senderEP);
     }
 }

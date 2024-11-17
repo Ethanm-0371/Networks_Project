@@ -14,7 +14,10 @@ public class GameClient : MonoBehaviour
     public IPEndPoint serverEndPoint;
 
     public string userName;
+    public GameObject ownedPlayerGO = null;
+    float playerActionsSendFrequency = 0.2f;
 
+    Queue<(PacketType, object)> functionsQueue = new Queue<(PacketType, object)>();
     Dictionary<PacketType, Action<object>> functionsDictionary;
 
     NetObjectsHandler netObjsHandler;
@@ -46,6 +49,13 @@ public class GameClient : MonoBehaviour
         {
             ScenesHandler.Singleton.LoadScene("Main_Menu", UnityEngine.SceneManagement.LoadSceneMode.Single);
         }
+
+        if (functionsQueue.Count > 0)
+        {
+            //Maybe add foreach or while != 0
+            (PacketType, object) dequeuedFunction = functionsQueue.Dequeue();
+            functionsDictionary[dequeuedFunction.Item1](dequeuedFunction.Item2);
+        }
     }
 
     public void Init(string ip, string username)
@@ -59,6 +69,8 @@ public class GameClient : MonoBehaviour
 
         Thread receive = new Thread(Receive);
         receive.Start();
+
+        StartCoroutine(SendPlayerActions(playerActionsSendFrequency));
     }
     void Receive()
     {
@@ -76,7 +88,7 @@ public class GameClient : MonoBehaviour
 
             (PacketType, object) decodedClass = PacketHandler.DecodeData(data);
 
-            functionsDictionary[decodedClass.Item1](decodedClass.Item2);
+            functionsQueue.Enqueue(decodedClass);
         }
     }
 
@@ -85,6 +97,7 @@ public class GameClient : MonoBehaviour
         functionsDictionary = new Dictionary<PacketType, Action<object>>()
         {
             { PacketType.netObjsDictionary, obj => { HandleReceiveNetObjects((Dictionary<uint, object>)obj); } },
+            { PacketType.playerActionsList, obj => { HandlePlayerActions((Wrappers.PlayerActionList)obj); } },
         };
     }
 
@@ -93,5 +106,37 @@ public class GameClient : MonoBehaviour
         netObjsHandler.CheckNetObjects(netObjects);
 
         ScenesHandler.Singleton.SetReady();
+    }
+
+    void HandlePlayerActions(Wrappers.PlayerActionList list)
+    {
+        foreach (var actionsInFrame in list.l._list)
+        {
+            foreach (var action in actionsInFrame._list)
+            {
+                netObjsHandler.netGameObjects[list.id].GetComponent<PlayerBehaviour>().ExecuteAction(action);
+            }
+        }
+    }
+
+    IEnumerator SendPlayerActions(float sendFrequency)
+    {
+        while (true)
+        {
+            if (ownedPlayerGO == null) { yield return null; } 
+            else 
+            {
+                var actionList = ownedPlayerGO.GetComponent<PlayerBehaviour>().GetActionsList();
+
+                if (actionList != null)
+                {
+                    var wrappedActionsList = new Wrappers.PlayerActionList(ownedPlayerGO.GetComponent<PlayerBehaviour>().netID, actionList);
+
+                    PacketHandler.SendPacket(clientSocket, serverEndPoint, PacketType.playerActionsList, wrappedActionsList);
+                }
+
+                yield return new WaitForSeconds(sendFrequency);
+            }
+        }
     }
 }

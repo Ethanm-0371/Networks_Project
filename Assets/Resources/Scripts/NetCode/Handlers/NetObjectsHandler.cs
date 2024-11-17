@@ -72,6 +72,7 @@ public class NetObjectsHandler : MonoBehaviour
         if (info.o != GameClient.Singleton.userName) { return; }
 
         GO.GetComponent<PlayerBehaviour>().isOwner = true;
+        GameClient.Singleton.ownedPlayerGO = GO;
         //Also set camera and others.
     }
 }
