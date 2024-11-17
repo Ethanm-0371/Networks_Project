@@ -46,7 +46,7 @@ public static class PacketHandler
 
         if (data.Length > 1023) { Debug.LogWarning("Packet data is bigger than max size"); }
 
-        byte[] result = new byte[1024];
+        byte[] result = new byte[data.Length + 1];
         result[0] = (byte)type;
 
         Buffer.BlockCopy(data, 0, result, 1, data.Length);
