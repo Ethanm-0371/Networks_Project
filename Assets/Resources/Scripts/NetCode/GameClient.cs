@@ -110,12 +110,9 @@ public class GameClient : MonoBehaviour
 
     void HandlePlayerActions(Wrappers.PlayerActionList list)
     {
-        foreach (var actionsInFrame in list.l._list)
+        foreach (var actions in list.l)
         {
-            foreach (var action in actionsInFrame._list)
-            {
-                netObjsHandler.netGameObjects[list.id].GetComponent<PlayerBehaviour>().ExecuteAction(action);
-            }
+            netObjsHandler.netGameObjects[list.id].GetComponent<PlayerBehaviour>().ExecuteActions(actions);
         }
     }
 
@@ -130,9 +127,7 @@ public class GameClient : MonoBehaviour
 
                 if (actionList != null)
                 {
-                    var wrappedActionsList = new Wrappers.PlayerActionList(ownedPlayerGO.GetComponent<PlayerBehaviour>().netID, actionList);
-
-                    PacketHandler.SendPacket(clientSocket, serverEndPoint, PacketType.playerActionsList, wrappedActionsList);
+                    PacketHandler.SendPacket(clientSocket, serverEndPoint, PacketType.playerActionsList, actionList);
                 }
 
                 yield return new WaitForSeconds(sendFrequency);

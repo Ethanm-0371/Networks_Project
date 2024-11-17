@@ -8,7 +8,7 @@ public class PlayerBehaviour : NetObject
     public bool isOwner = false;
     float moveSpeed = 5f;
 
-    List<List<PlayerAction>> pendingActions = new List<List<PlayerAction>>();
+    List<PlayerActions> pendingActions = new List<PlayerActions>();
 
     private void Update()
     {
@@ -20,54 +20,84 @@ public class PlayerBehaviour : NetObject
 
     void HandleInput()
     {
-        List<PlayerAction> actionList = new List<PlayerAction>();
+        List<PlayerActions.Actions> actionsInFrame = new List<PlayerActions.Actions>();
 
         if (Input.GetKey(KeyCode.W))
         {
-            actionList.Add(new PlayerAction(PlayerAction.Actions.Move, new PlayerActionParams(Vector3.forward * Time.deltaTime)));
+            actionsInFrame.Add(PlayerActions.Actions.MoveF);
         }
         if (Input.GetKey(KeyCode.S))
         {
-            actionList.Add(new PlayerAction(PlayerAction.Actions.Move, new PlayerActionParams(Vector3.back * Time.deltaTime)));
+            actionsInFrame.Add(PlayerActions.Actions.MoveB);
         }
         if (Input.GetKey(KeyCode.A))
         {
-            actionList.Add(new PlayerAction(PlayerAction.Actions.Move, new PlayerActionParams(Vector3.left * Time.deltaTime)));
+            actionsInFrame.Add(PlayerActions.Actions.MoveL);
         }
         if (Input.GetKey(KeyCode.D))
         {
-            actionList.Add(new PlayerAction(PlayerAction.Actions.Move, new PlayerActionParams(Vector3.right * Time.deltaTime)));
+            actionsInFrame.Add(PlayerActions.Actions.MoveR);
         }
 
-        foreach (var action in actionList)
+        if (actionsInFrame.Count > 0)
         {
-            ExecuteAction(action);
-        }
+            PlayerActions actionsToExecute = new PlayerActions(actionsInFrame, Time.deltaTime.ToString());
 
-        if (actionList.Count > 0) { pendingActions.Add(actionList); }
+            ExecuteActions(actionsToExecute);
+
+            pendingActions.Add(actionsToExecute);
+        }
     }
 
-    public void ExecuteAction(PlayerAction action)
+    public void ExecuteActions(PlayerActions actions)
     {
-        switch (action.a)
+        foreach (var action in actions.a)
         {
-            case PlayerAction.Actions.Move:
-                Move(JsonUtility.FromJson<Vector3>(action.p.l[0]));
+            switch (action)
+            {
+                case PlayerActions.Actions.MoveF:
+                case PlayerActions.Actions.MoveB:
+                case PlayerActions.Actions.MoveL:
+                case PlayerActions.Actions.MoveR:
+                    Move(action, float.Parse(actions.p));
+                    break;
+                case PlayerActions.Actions.Rotate:
+                    break;
+                case PlayerActions.Actions.None:
+                default:
+                    break;
+            }
+        }
+
+        
+    }
+
+    void Move(PlayerActions.Actions action, float deltaTime)
+    {
+        Vector3 direction = Vector3.zero;
+
+        switch (action)
+        {
+            case PlayerActions.Actions.MoveF:
+                direction = Vector3.forward;
                 break;
-            case PlayerAction.Actions.Rotate:
-                //Rotate((Vector3)action.p[0]); //To be implemented
+            case PlayerActions.Actions.MoveB:
+                direction = Vector3.back;
                 break;
-            case PlayerAction.Actions.None:
+            case PlayerActions.Actions.MoveL:
+                direction = Vector3.left;
+                break;
+            case PlayerActions.Actions.MoveR:
+                direction = Vector3.right;
+                break;
+            case PlayerActions.Actions.None:
             default:
                 break;
         }
-    }
 
-    void Move(Vector3 direction)
-    {
         if (direction.magnitude > 0)
         {
-            transform.Translate(direction * moveSpeed, Space.World);
+            transform.Translate(direction * moveSpeed * deltaTime, Space.World);
         }
     }
     void Rotate(Vector3 increment)
@@ -75,11 +105,11 @@ public class PlayerBehaviour : NetObject
 
     }
 
-    public List<List<PlayerAction>> GetActionsList()
+    public PlayerActionList? GetActionsList()
     {
         if (pendingActions.Count <= 0) { return null; }
 
-        List<List<PlayerAction>> listToReturn = new List<List<PlayerAction>>(pendingActions);
+        PlayerActionList listToReturn = new PlayerActionList(netID, pendingActions);
 
         pendingActions.Clear();
 

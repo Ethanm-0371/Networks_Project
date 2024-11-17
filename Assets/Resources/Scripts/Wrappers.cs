@@ -8,57 +8,37 @@ namespace Wrappers
     [Serializable]
     public struct PlayerActionList
     {
-        public PlayerActionList(uint playerID, List<List<PlayerAction>> frameList)
+        public PlayerActionList(uint playerID, List<PlayerActions> actionList)
         {
-            var wrappedList = new ListWrapper<ListWrapper<PlayerAction>>(new List<ListWrapper<PlayerAction>>());
-
-            foreach (var item in frameList)
-            {
-                wrappedList._list.Add(new ListWrapper<PlayerAction>(item));
-            }
-
             id = playerID;
-            l = wrappedList;
+            l = new List<PlayerActions>(actionList);
         }
 
-        public uint id; //Id of the player which executed the actions
-        public ListWrapper<ListWrapper<PlayerAction>> l;
+        public uint id; //Id of the player
+        public List<PlayerActions> l; //List of actions
     }
 
     [Serializable]
-    public struct PlayerAction
+    public struct PlayerActions
     {
         public enum Actions
         {
             None,
-            Move,
+            MoveF,
+            MoveB,
+            MoveL,
+            MoveR,
             Rotate,
         }
 
-        public PlayerAction(Actions action, PlayerActionParams parameters)
+        public PlayerActions(List<Actions> actionsInOneFrame, string parameter)
         {
-            a = action;
-            p = parameters;
+            a = actionsInOneFrame;
+            p = parameter;
         }
 
-        public Actions a; //Action type
-        public PlayerActionParams p; //Parameters
-    }
-
-    [Serializable]
-    public struct PlayerActionParams
-    {
-        public PlayerActionParams(params object[] parameters)
-        {
-            l = new List<string>();
-
-            foreach (var item in parameters)
-            {
-                l.Add(JsonUtility.ToJson(item));
-            }
-        }
-
-        public List<string> l; //Parameters list
+        public List<Actions> a; //Action type
+        public string p; //Parameter
     }
 
     [Serializable]
