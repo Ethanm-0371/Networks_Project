@@ -12,47 +12,22 @@ public class NetObjectsHandler : MonoBehaviour
 
     public Dictionary<uint, GameObject> netGameObjects = new Dictionary<uint, GameObject>();
 
-    List<(uint, object)> netObjectsToInstantiate = new List<(uint, object)>();  //Change to queue structure for performance?
-    List<(uint, object)> netObjectsToUpdate = new List<(uint, object)>();       //Change to queue structure for performance?
-
-    private void Update()
-    {
-        //TO DO: Lock queue
-        if (netObjectsToInstantiate.Count > 0)
-        {
-            foreach (var obj in netObjectsToInstantiate)
-            {
-                InternalInstantiate(obj.Item1, obj.Item2);
-            }
-            netObjectsToInstantiate.Clear();
-        }
-
-        if (netObjectsToUpdate.Count > 0)
-        {
-            foreach (var obj in netObjectsToUpdate)
-            {
-                netGameObjects[obj.Item1].GetComponent<NetObject>().UpdateObject(obj.Item2);
-            }
-            netObjectsToUpdate.Clear();
-        }
-    }
-
     public void CheckNetObjects(Dictionary<uint, object> receivedDictionary)
     {
         foreach (var entry in receivedDictionary)
         {
             if (netGameObjects.ContainsKey(entry.Key))
             {
-                netObjectsToUpdate.Add((entry.Key, entry.Value));
+                netGameObjects[entry.Key].GetComponent<NetObject>().UpdateObject(entry.Value);
             }
             else
             {
-                netObjectsToInstantiate.Add((entry.Key, entry.Value));
+                InstantiateGameObject(entry.Key, entry.Value);
             }
         }
     }
 
-    private void InternalInstantiate(uint netID, object objectToInstantiate)
+    private void InstantiateGameObject(uint netID, object objectToInstantiate)
     {
         Type objectType = objectToInstantiate.GetType();
         GameObject newNetObj = (GameObject)Instantiate(Resources.Load("Prefabs/" + prefabPaths[objectType]));
@@ -64,7 +39,6 @@ public class NetObjectsHandler : MonoBehaviour
         {
             InitPlayer(newNetObj, (Wrappers.Player)objectToInstantiate);
         }
-
     }
 
     private void InitPlayer(GameObject GO, Wrappers.Player info)
