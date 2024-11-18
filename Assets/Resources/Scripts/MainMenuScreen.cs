@@ -14,6 +14,14 @@ public class MainMenuScreen : MonoBehaviour
     [SerializeField] TMP_InputField HostUsernameInputField;
     [SerializeField] TMP_InputField ClientUsernameInputField;
 
+    private void Awake()
+    {
+        //This limits the framerate so that "action" packets do not exceed buffer size.
+        //A better solution to this has to be found.
+        Application.targetFrameRate = 60;
+        QualitySettings.vSyncCount = 0;
+    }
+
     public void OnClickHost()
     {
         if (string.IsNullOrWhiteSpace(HostUsernameInputField.text)) { return; } //Handle error

@@ -130,7 +130,8 @@ public class GameClient : MonoBehaviour
                     PacketHandler.SendPacket(clientSocket, serverEndPoint, PacketType.playerActionsList, actionList);
                 }
 
-                yield return new WaitForSeconds(sendFrequency);
+                //yield return new WaitForSeconds(sendFrequency);
+                yield return null;
             }
         }
     }
