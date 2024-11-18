@@ -2,7 +2,7 @@
 https://github.com/Ethanm-0371/Networks_Project
 
 # GitHub Release
-[First delivery](https://github.com/Ethanm-0371/Networks_Project/releases/tag/v.0.1)
+https://github.com/Ethanm-0371/Networks_Project/releases/tag/v.0.1
 
 # List of Contributions
 
