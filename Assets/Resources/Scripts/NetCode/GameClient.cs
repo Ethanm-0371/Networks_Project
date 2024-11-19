@@ -123,11 +123,12 @@ public class GameClient : MonoBehaviour
             if (ownedPlayerGO == null) { yield return null; } 
             else 
             {
-                var actionList = ownedPlayerGO.GetComponent<PlayerBehaviour>().GetActionsList();
+                var playerBehaviour = ownedPlayerGO.GetComponent<PlayerBehaviour>();
+                var changes = playerBehaviour.GetChangedComponents();
 
-                if (actionList != null)
+                if (changes.Count > 0)
                 {
-                    PacketHandler.SendPacket(clientSocket, serverEndPoint, PacketType.playerActionsList, actionList);
+                    PacketHandler.SendPacket(clientSocket, serverEndPoint, PacketType.playerActionsList, changes);
                 }
 
                 //yield return new WaitForSeconds(sendFrequency);

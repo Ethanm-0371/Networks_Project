@@ -8,7 +8,14 @@ public class PlayerBehaviour : NetObject
     public bool isOwner = false;
     float moveSpeed = 5f;
 
+
+    // Last state variables
+    bool actionsChanged = false;
     List<PlayerActions> pendingActions = new List<PlayerActions>();
+    bool positionChanged = false;
+    Vector3 lastPosition;
+    //bool rotationChanged = false;
+    //private Quaternion lastRotation;
 
     private void Update()
     {
@@ -98,6 +105,9 @@ public class PlayerBehaviour : NetObject
         if (direction.magnitude > 0)
         {
             transform.Translate(direction * moveSpeed * deltaTime, Space.World);
+
+            if (transform.position != lastPosition) positionChanged = true;
+            
         }
     }
     void Rotate(Vector3 increment)
@@ -115,6 +125,37 @@ public class PlayerBehaviour : NetObject
 
         return listToReturn;
     }
+
+    public Dictionary<string, object> GetChangedComponents()
+    {
+        Dictionary<string, object> changes = new Dictionary<string, object>();
+
+        if (positionChanged)
+        {
+            if (transform.position.x != lastPosition.x)
+                changes["position.x"] = transform.position.x;
+            if (transform.position.y != lastPosition.y)
+                changes["position.y"] = transform.position.y;
+            if (transform.position.z != lastPosition.z)
+                changes["position.z"] = transform.position.z;
+
+            lastPosition = transform.position;
+
+            positionChanged = false;
+        }
+
+        if (actionsChanged)
+        {
+            var actionList = GetActionsList();
+            if (actionList != null)
+                changes["actions"] = actionList;
+
+            actionsChanged = false;
+        }
+
+        return changes;
+    }
+
 
     //In the case of the player, this serves as state confirmation
     public override void UpdateObject(object info)
