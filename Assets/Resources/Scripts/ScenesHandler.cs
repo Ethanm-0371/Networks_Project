@@ -46,13 +46,10 @@ public class ScenesHandler : MonoBehaviour
         loadingScreenGO = (GameObject)Instantiate(loadingScreenPrefab);
         DontDestroyOnLoad(loadingScreenGO);
 
-        //sceneLoading = SceneManager.LoadSceneAsync(sceneName, loadMode);
-        //sceneLoading.completed += (AsyncOperation func) => { PacketHandler.SendPacket(GameClient.Singleton.clientSocket, GameClient.Singleton.serverEndPoint, new SceneLoadedData()); };
-
-        SceneManager.LoadSceneAsync(sceneName, loadMode).completed += (AsyncOperation func) => { PacketHandler.SendPacket(GameClient.Singleton.clientSocket,
-                                                                                                                          GameClient.Singleton.serverEndPoint, 
-                                                                                                                          PacketType.SceneLoadedFlag, 
-                                                                                                                          new SceneLoadedData()); };
+        SceneManager.LoadSceneAsync(sceneName, loadMode).completed += (AsyncOperation func) =>
+        {
+            PacketHandler.SendPacket(GameClient.Singleton.clientSocket, GameClient.Singleton.serverEndPoint, PacketType.SceneLoadedFlag, new Wrappers.SceneLoadedData(1));
+        };
     }
 
     public void SetReady()

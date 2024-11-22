@@ -14,7 +14,7 @@ public class GameServer : MonoBehaviour
     Socket serverSocket;
 
     Dictionary<EndPoint, string> connectedUsers = new Dictionary<EndPoint, string>();
-    public Dictionary<uint, object> netObjectsInfo = new Dictionary<uint, object>();
+    public Dictionary<uint, NetInfo> netObjectsInfo = new Dictionary<uint, NetInfo>();
 
     Dictionary<PacketType, Action<object, EndPoint>> functionsDictionary;
 
@@ -64,13 +64,28 @@ public class GameServer : MonoBehaviour
 
             if (recv == 0) { continue; }
 
-            (PacketType, object) decodedClass = PacketHandler.DecodeData(data);
+            (PacketType, object) decodedClass;
+
+            //Data[1] defines if the packet contains a list
+            if (data[1] != 0) { decodedClass = PacketHandler.NewDecodeMultiPacket(data); }
+            else              { decodedClass = PacketHandler.NewDecodeSinglePacket(data); }
 
             functionsDictionary[decodedClass.Item1](decodedClass.Item2, Remote);
         }
     }
 
-    void BroadCastPacket<T>(PacketType type, T packetToSend, EndPoint sender)
+    void BroadCastPacket(PacketType type, NetInfo objectToSend, EndPoint sender)
+    {
+        foreach (var user in connectedUsers)
+        {
+            if (user.Key.GetIP().ToString() == sender.GetIP().ToString() &&
+               user.Key.GetPort() == sender.GetPort()) { continue; }
+
+            IPEndPoint ipep = new IPEndPoint(user.Key.GetIP(), user.Key.GetPort());
+            PacketHandler.SendPacket(serverSocket, ipep, type, objectToSend);
+        }
+    }
+    void BroadCastPacket(PacketType type, List<NetInfo> infoList, EndPoint sender)
     {
         foreach (var user in connectedUsers)
         {
@@ -78,7 +93,7 @@ public class GameServer : MonoBehaviour
                user.Key.GetPort() == sender.GetPort()) { continue; }
 
             IPEndPoint ipep = new IPEndPoint(user.Key.GetIP(), user.Key.GetPort());
-            PacketHandler.SendPacket(serverSocket, ipep, type, packetToSend);
+            PacketHandler.SendPacket(serverSocket, ipep, type, infoList);
         }
     }
     void BroadCastPacket(byte[] packetToSend, EndPoint sender)
@@ -97,15 +112,15 @@ public class GameServer : MonoBehaviour
     {
         functionsDictionary = new Dictionary<PacketType, Action<object, EndPoint>>()
         {
-            { PacketType.PlayerData, (obj, ep) => { AddUserToDictionary(ep, (PlayerData)obj); } },
+            { PacketType.PlayerData, (obj, ep) => { AddUserToDictionary(ep, (Wrappers.UserData)obj); } },
             { PacketType.SceneLoadedFlag, (obj, ep) => { HandleClientSceneLoaded(ep); } },
             { PacketType.playerActionsList, (obj, ep) => { HandlePlayerActions((Wrappers.PlayerActionList)obj, ep); } },
         };
     }
 
-    void AddUserToDictionary(EndPoint ep, PlayerData playerData)
+    void AddUserToDictionary(EndPoint ep, Wrappers.UserData playerData)
     {
-        connectedUsers.Add(ep, playerData.Username);
+        connectedUsers.Add(ep, playerData.userName);
     }
 
     public uint GenerateRandomID()
@@ -133,13 +148,20 @@ public class GameServer : MonoBehaviour
 
         IPEndPoint ipep = new IPEndPoint(ep.GetIP(), ep.GetPort());
 
-        byte[] encodedDictionary = PacketHandler.EncodeDictionary(netObjectsInfo);
-        PacketHandler.SendPacket(serverSocket, ipep, encodedDictionary);
-        BroadCastPacket(encodedDictionary, ep);
+        //Since the whole dictionary must be sent, it can be encoded as a list
+        List<NetInfo> objsInfo = new List<NetInfo>();
+
+        foreach (var item in netObjectsInfo)
+        {
+            objsInfo.Add(new Wrappers.NetObjInfo(item.Key, item.Value));
+        }
+
+        PacketHandler.SendPacket(serverSocket, ipep, PacketType.netObjsDictionary, objsInfo);
+        BroadCastPacket(PacketType.netObjsDictionary, objsInfo, ipep);
     }
 
-    void HandlePlayerActions(Wrappers.PlayerActionList list, EndPoint senderEP)
+    void HandlePlayerActions(Wrappers.PlayerActionList actionsListContainer, EndPoint senderEP)
     {
-        BroadCastPacket(PacketType.playerActionsList, list, senderEP);
+        BroadCastPacket(PacketType.playerActionsList, actionsListContainer, senderEP);
     }
 }

@@ -64,7 +64,7 @@ public class GameClient : MonoBehaviour
         serverEndPoint = new IPEndPoint(IPAddress.Parse(ip), 9050); //Change port to another inputfield
 
         //Handshake
-        PacketHandler.SendPacket(clientSocket, serverEndPoint, PacketType.PlayerData, new PlayerData(username));
+        PacketHandler.SendPacket(clientSocket, serverEndPoint, PacketType.PlayerData, new Wrappers.UserData(username));
         userName = username;
 
         Thread receive = new Thread(Receive);
@@ -86,7 +86,11 @@ public class GameClient : MonoBehaviour
 
             if (recv == 0) { continue; }
 
-            (PacketType, object) decodedClass = PacketHandler.DecodeData(data);
+            (PacketType, object) decodedClass;
+
+            //Data[1] defines if the packet contains a list
+            if (data[1] != 0) { decodedClass = PacketHandler.NewDecodeMultiPacket(data); }
+            else              { decodedClass = PacketHandler.NewDecodeSinglePacket(data); }
 
             functionsQueue.Enqueue(decodedClass);
         }
@@ -96,14 +100,14 @@ public class GameClient : MonoBehaviour
     {
         functionsDictionary = new Dictionary<PacketType, Action<object>>()
         {
-            { PacketType.netObjsDictionary, obj => { HandleReceiveNetObjects((Dictionary<uint, object>)obj); } },
+            { PacketType.netObjsDictionary, obj => { HandleReceiveNetObjects((List<NetInfo>)obj); } },
             { PacketType.playerActionsList, obj => { HandlePlayerActions((Wrappers.PlayerActionList)obj); } },
         };
     }
 
-    void HandleReceiveNetObjects(Dictionary<uint, object> netObjects)
+    void HandleReceiveNetObjects(List<NetInfo> netObjectsInfo)
     {
-        netObjsHandler.CheckNetObjects(netObjects);
+        netObjsHandler.CheckNetObjects(netObjectsInfo);
 
         ScenesHandler.Singleton.SetReady();
     }
