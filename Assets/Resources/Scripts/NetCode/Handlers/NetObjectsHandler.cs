@@ -47,6 +47,7 @@ public class NetObjectsHandler : MonoBehaviour
 
         GO.GetComponent<PlayerBehaviour>().isOwner = true;
         GameClient.Singleton.ownedPlayerGO = GO;
-        //Also set camera and others.
+        
+        Camera.main.gameObject.GetComponent<PlayerCamera>().SetParent(GO.transform);
     }
 }
