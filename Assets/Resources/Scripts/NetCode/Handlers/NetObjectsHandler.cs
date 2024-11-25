@@ -12,17 +12,17 @@ public class NetObjectsHandler : MonoBehaviour
 
     public Dictionary<uint, GameObject> netGameObjects = new Dictionary<uint, GameObject>();
 
-    public void CheckNetObjects(Dictionary<uint, object> receivedDictionary)
+    public void CheckNetObjects(List<NetInfo> receivedList)
     {
-        foreach (var entry in receivedDictionary)
+        foreach (Wrappers.NetObjInfo entry in receivedList)
         {
-            if (netGameObjects.ContainsKey(entry.Key))
+            if (netGameObjects.ContainsKey(entry.id))
             {
-                netGameObjects[entry.Key].GetComponent<NetObject>().UpdateObject(entry.Value);
+                netGameObjects[entry.id].GetComponent<NetObject>().UpdateObject(entry.objectInfo);
             }
             else
             {
-                InstantiateGameObject(entry.Key, entry.Value);
+                InstantiateGameObject(entry.id, entry.objectInfo);
             }
         }
     }

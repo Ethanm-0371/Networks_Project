@@ -1,9 +1,10 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using UnityEngine;
 using Wrappers;
+
+#if (UNITY_EDITOR) 
 
 public class SerializationPlayground : MonoBehaviour
 {
@@ -157,7 +158,9 @@ public class SerializationPlayground : MonoBehaviour
                         playerList.Add(classToEncode);
                     }
 
-                    return EncodeJson(PacketType.None, new ListWrapper<Player>(playerList));
+                    //Json encoding does not exist anymore
+                    //return EncodeJson(PacketType.None, new ListWrapper<Player>(playerList));
+                    return new byte[0];
                 }
                 else
                 {
@@ -244,3 +247,5 @@ public class SerializationPlayground : MonoBehaviour
         Debug.Log(finalPrint);
     }
 }
+
+#endif

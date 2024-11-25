@@ -1,15 +1,8 @@
 using System;
-using System.Collections;
 using System.Collections.Generic;
-using System.IO;
 using System.Net;
 using System.Net.Sockets;
 using UnityEngine;
-
-public struct SceneLoadedData
-{
-    //To fill later
-}
 
 public enum PacketType
 {
@@ -23,128 +16,111 @@ public enum PacketType
 
 public static class PacketHandler
 {
-    static Dictionary<PacketType, Type> decodeTypes = new Dictionary<PacketType, Type>()
+    private static byte[] NewEncodePacket(PacketType type, NetInfo objectToAdd)
     {
-        {PacketType.None,               typeof(object)}, // Acts as the "null" equivalent
-        {PacketType.SceneLoadedFlag,    typeof(SceneLoadedData)},
-        {PacketType.PlayerData,         typeof(PlayerData)},
-        {PacketType.playerActionsList,  typeof(Wrappers.PlayerActionList)},
-    };
+        byte[] serializedClass = objectToAdd.Serialize();
 
-    private static byte[] EncodeData<T>(PacketType type, T classToEncode)
-    {
-        string json = JsonUtility.ToJson(classToEncode);
-
-        MemoryStream stream = new MemoryStream();
-        BinaryWriter writer = new BinaryWriter(stream);
-        writer.Write(json);
-
-        byte[] data = stream.ToArray();
-
-        writer.Close();
-        stream.Close();
-
-        if (data.Length > 1023) { Debug.LogWarning("Packet data is bigger than max size"); }
-
-        byte[] result = new byte[data.Length + 1];
+        byte[] result = new byte[serializedClass.Length + 3];                   //+3 because 1 from the PaketType byte, 1 from the list flag and 1 from the type of data
         result[0] = (byte)type;
+        result[1] = 0;                                                          //Indicates that the packet is not a list
+        result[2] = (byte)Wrappers.Types.encodeTypes[objectToAdd.GetType()];    //Use another byte to specify the type of the data;
 
-        Buffer.BlockCopy(data, 0, result, 1, data.Length);
+        Buffer.BlockCopy(serializedClass, 0, result, 3, serializedClass.Length);
+
+        return result;
+    }
+    private static byte[] NewEncodePacket(PacketType type, List<NetInfo> objectsToAdd)
+    {
+        List<byte[]> dataToAdd = new List<byte[]>();
+        int totalDataSize = 0;
+
+        foreach (var item in objectsToAdd)                                      //First we make a list of all of the objects we want to encode and their respective info
+        {
+            byte[] entry = item.Serialize();
+            dataToAdd.Add(BitConverter.GetBytes((short)entry.Length));          //Put 2 bytes in front of the data to specify the size of it
+
+            byte[] classType = new byte[1];
+            classType[0] = (byte)Wrappers.Types.encodeTypes[item.GetType()];    //Use another byte to specify the type of the data
+            dataToAdd.Add(classType);
+
+            dataToAdd.Add(entry);
+            totalDataSize += entry.Length + 3;                                  //+3 from the 2 bytes of the size and the 1 from the type
+
+            if (totalDataSize > 1023)
+                Debug.LogWarning("Packet data is bigger than 1024 bytes");
+        }
+
+        byte[] result = new byte[totalDataSize + 3];                            //+3 because 1 from the PaketType byte, 1 from the list flag and 1 from number of entries
+        result[0] = (byte)type;
+        result[1] = 1;                                                          //Indicates that the packet IS a list
+        result[2] = (byte)(dataToAdd.Count / 3);                                //Divide three because each entry is size + type + data
+
+        int currentOffset = 3;
+        foreach (var entry in dataToAdd)
+        {
+            Buffer.BlockCopy(entry, 0, result, currentOffset, entry.Length);
+            currentOffset += entry.Length;
+        }
+
         return result;
     }
 
-    public static (PacketType, object) DecodeData(byte[] data)
+    public static (PacketType, NetInfo) NewDecodeSinglePacket(byte[] packet)
     {
-        PacketType type = (PacketType)data[0];
+        PacketType type = (PacketType)packet[0];
 
-        //Find where in the packet the data ends
-        int dataLength = Array.IndexOf(data, (byte)0, 1) - 1;
-        if (dataLength < 0) dataLength = data.Length - 1;
+        Type dataType = Wrappers.Types.decodeTypes[(Wrappers.Types.ClassIdentifyers)packet[2]]; //Read third byte of the packet because second is List flag
 
-        MemoryStream stream = new MemoryStream(data, 1, dataLength);
-        BinaryReader reader = new BinaryReader(stream);
-        stream.Seek(0, SeekOrigin.Begin);
+        byte[] classToDecode = new byte[packet.Length - 3];                                     //-3 due to the one from PacketType, the one from the list flag and the one from the data type
+        Buffer.BlockCopy(packet, 3, classToDecode, 0, packet.Length - 3);                       //Copy the actual class info from the original array
 
-        string json = reader.ReadString();
+        NetInfo decodedClass = (NetInfo)Activator.CreateInstance(dataType);
+        decodedClass.Deserialize(classToDecode);
 
-        reader.Close();
-        stream.Close();
+        return (type, decodedClass);
+    }
+    public static (PacketType, List<NetInfo>) NewDecodeMultiPacket(byte[] packet)
+    {
+        List<NetInfo> returnList = new List<NetInfo>();
 
-        if (type == PacketType.netObjsDictionary) { return (type, JsonToDictionary(json)); }
+        PacketType type = (PacketType)packet[0];
+        int numberOfEntries = packet[2];
 
-        return (type, JsonUtility.FromJson(json, decodeTypes[type]));
+        int offset = 3;
+
+        for (int i = 0; i < numberOfEntries; i++)
+        {
+            int objectSize = BitConverter.ToInt16(packet, offset);                                          //Read first byte of the entry to get the size of it
+            offset += 2;
+
+            Type dataType = Wrappers.Types.decodeTypes[(Wrappers.Types.ClassIdentifyers)packet[offset]];    //Read second byte of the entry to get its type
+            offset += 1;
+
+            byte[] classToDecode = new byte[objectSize];
+            Buffer.BlockCopy(packet, offset, classToDecode, 0, objectSize);                                 //Copy the class info from the original array to process it
+            offset += objectSize;
+
+            NetInfo decodedClass = (NetInfo)Activator.CreateInstance(dataType);
+            decodedClass.Deserialize(classToDecode);
+
+            returnList.Add(decodedClass);
+        }
+
+        return (type, returnList);
     }
 
-    public static void SendPacket<T>(Socket senderSocket, IPEndPoint targetEndPoint, PacketType type, T classInstance)
+    public static void SendPacket(Socket senderSocket, IPEndPoint targetEndPoint, PacketType type, NetInfo infoToSend)
     {
-        byte[] data = EncodeData(type, classInstance);
+        byte[] data = NewEncodePacket(type, infoToSend);
+        senderSocket.SendTo(data, data.Length, SocketFlags.None, targetEndPoint);
+    }
+    public static void SendPacket(Socket senderSocket, IPEndPoint targetEndPoint, PacketType type, List<NetInfo> infoToSend)
+    {
+        byte[] data = NewEncodePacket(type, infoToSend);
         senderSocket.SendTo(data, data.Length, SocketFlags.None, targetEndPoint);
     }
     public static void SendPacket(Socket senderSocket, IPEndPoint targetEndPoint, byte[] data)
     {
         senderSocket.SendTo(data, data.Length, SocketFlags.None, targetEndPoint);
-    }
-
-    [Serializable]
-    public class DictionaryEntryWrapper
-    {
-        public uint _key;
-        public string _valueType;
-        public string _valueJSON;
-
-        public DictionaryEntryWrapper(uint key, string valueType, string valueJSON)
-        {
-            _key = key;
-            _valueType = valueType;
-            _valueJSON = valueJSON;
-        }
-    }
-
-    public static byte[] EncodeDictionary(Dictionary<uint, object> dictionaryToEncode)
-    {
-        List<DictionaryEntryWrapper> dictionaryList = new List<DictionaryEntryWrapper>();
-
-        foreach (var item in dictionaryToEncode)
-        {
-            dictionaryList.Add(new DictionaryEntryWrapper(item.Key, item.Value.GetType().Name, JsonUtility.ToJson(item.Value)));
-        }
-
-        Wrappers.ListWrapper<DictionaryEntryWrapper> wrapper = new Wrappers.ListWrapper<DictionaryEntryWrapper>(dictionaryList);
-        string json = JsonUtility.ToJson(wrapper);
-
-        MemoryStream stream = new MemoryStream();
-        BinaryWriter writer = new BinaryWriter(stream);
-        writer.Write(json);
-
-        byte[] data = stream.ToArray();
-
-        writer.Close();
-        stream.Close();
-
-        if (data.Length > 1023) { Debug.LogWarning("Packet data is bigger than max size"); }
-
-        byte[] result = new byte[1024];
-        result[0] = (byte)PacketType.netObjsDictionary;
-
-        Buffer.BlockCopy(data, 0, result, 1, data.Length);
-        return result;
-    }
-    public static Dictionary<uint, object> JsonToDictionary(string json)
-    {
-        Wrappers.ListWrapper<DictionaryEntryWrapper> wrapper = JsonUtility.FromJson<Wrappers.ListWrapper<DictionaryEntryWrapper>>(json);
-
-        var dictionary = new Dictionary<uint, object>();
-
-        foreach (var entry in wrapper._list)
-        {
-            Type type = Type.GetType($"Wrappers.{entry._valueType}");
-
-            object obj = JsonUtility.FromJson(entry._valueJSON, type);
-
-            //dictionary[entry._key] = value; //Works as well
-            dictionary.Add(entry._key, obj);
-        }
-
-        return dictionary;
     }
 }

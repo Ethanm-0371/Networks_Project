@@ -1,7 +1,7 @@
-using System.Collections;
-using System.Collections.Generic;
 using UnityEngine;
 using UnityEditor;
+
+#if (UNITY_EDITOR) 
 
 [CustomEditor(typeof(SerializationPlayground))]
 public class SerializationPlaygroundEditor : Editor
@@ -99,3 +99,5 @@ public class SerializationPlaygroundEditor : Editor
         quaternionConversion = EditorGUILayout.Vector4Field("Rotation", quaternionConversion);
     }
 }
+
+#endif
