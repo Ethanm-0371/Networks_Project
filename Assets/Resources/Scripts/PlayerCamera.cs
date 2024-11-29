@@ -5,6 +5,12 @@ using UnityEngine;
 public class PlayerCamera : MonoBehaviour
 {
     [SerializeField] Vector3 offset;
+    Transform pivot;
+
+    private void Awake()
+    {
+        pivot = transform.parent;
+    }
 
     void Update()
     {
@@ -22,7 +28,9 @@ public class PlayerCamera : MonoBehaviour
 
     public void SetParent(Transform parent)
     {
-        transform.parent = parent;
+        pivot.parent = parent;
+
+        pivot.position = parent.transform.position + Vector3.up;
 
         transform.localPosition = offset;
     }

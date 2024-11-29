@@ -17,11 +17,20 @@ public class PlayerBehaviour : NetObject
     //bool rotationChanged = false;
     //private Quaternion lastRotation;
 
+    [SerializeField] float sensitivity = 5.0f;
+    [SerializeField] PlayerCamera playerCam;
+
+    private void Awake()
+    {
+        playerCam = Camera.main.GetComponent<PlayerCamera>();
+    }
+
     private void Update()
     {
         if(isOwner)
         {
             HandleInput();
+            Rotate();
         }
     }
 
@@ -48,7 +57,7 @@ public class PlayerBehaviour : NetObject
 
         if (actionsInFrame.Count > 0)
         {
-            PlayerActions actionsToExecute = new PlayerActions(actionsInFrame, Time.deltaTime.ToString());
+            PlayerActions actionsToExecute = new PlayerActions(actionsInFrame, new List<string>() { Time.deltaTime.ToString() });
 
             ExecuteActions(actionsToExecute);
 
@@ -66,7 +75,7 @@ public class PlayerBehaviour : NetObject
                 case PlayerActions.Actions.MoveB:
                 case PlayerActions.Actions.MoveL:
                 case PlayerActions.Actions.MoveR:
-                    Move(action, float.Parse(actions.p));
+                    Move(action, float.Parse(actions.p[0]));
                     break;
                 case PlayerActions.Actions.Rotate:
                     break;
@@ -86,16 +95,16 @@ public class PlayerBehaviour : NetObject
         switch (action)
         {
             case PlayerActions.Actions.MoveF:
-                direction = Vector3.forward;
+                direction = transform.forward;
                 break;
             case PlayerActions.Actions.MoveB:
-                direction = Vector3.back;
+                direction = -transform.forward;
                 break;
             case PlayerActions.Actions.MoveL:
-                direction = Vector3.left;
+                direction = -transform.right;
                 break;
             case PlayerActions.Actions.MoveR:
-                direction = Vector3.right;
+                direction = transform.right;
                 break;
             case PlayerActions.Actions.None:
             default:
@@ -110,9 +119,13 @@ public class PlayerBehaviour : NetObject
             
         }
     }
-    void Rotate(Vector3 increment)
+    void Rotate()
     {
+        float mouseX = Input.GetAxis("Mouse X") * sensitivity * Time.deltaTime;
+        float mouseY = Input.GetAxis("Mouse Y") * sensitivity * Time.deltaTime;
 
+        transform.Rotate(Vector3.up * mouseX);
+        playerCam.transform.parent.Rotate(Vector3.right * -mouseY);
     }
 
     public PlayerActionList? GetActionsList()

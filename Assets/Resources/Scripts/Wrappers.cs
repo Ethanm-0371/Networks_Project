@@ -88,14 +88,14 @@ namespace Wrappers
             Rotate,
         }
 
-        public PlayerActions(List<Actions> actionsInOneFrame, string parameter)
+        public PlayerActions(List<Actions> actionsInOneFrame, List<string> parameter)
         {
             a = actionsInOneFrame;
             p = parameter;
         }
 
         public List<Actions> a; //Action type
-        public string p; //Parameter
+        public List<string> p; //Parameters
 
         public byte[] Serialize()
         {
@@ -103,13 +103,16 @@ namespace Wrappers
             BinaryWriter writer = new BinaryWriter(stream);
 
             writer.Write((short)a.Count);
-
-            foreach (var item in a)
+            foreach (var action in a)
             {
-                writer.Write((char)item);
+                writer.Write((char)action);
             }
 
-            writer.Write(p);
+            writer.Write((short)p.Count);
+            foreach (var param in p)
+            {
+                writer.Write(param); ;
+            }
 
             byte[] data = stream.ToArray();
 
@@ -121,18 +124,22 @@ namespace Wrappers
         public void Deserialize(byte[] data)
         {
             a = new List<Actions>();
+            p = new List<string>();
 
             MemoryStream stream = new MemoryStream(data);
             BinaryReader reader = new BinaryReader(stream);
 
             short actionAmount = reader.ReadInt16();
-
             for (int i = 0; i < actionAmount; i++)
             {
                 a.Add((Actions)reader.ReadChar());
             }
 
-            p = reader.ReadString();
+            short paramAmount = reader.ReadInt16();
+            for (int i = 0; i < paramAmount; i++)
+            {
+                p.Add(reader.ReadString());
+            }
 
             stream.Close();
         }
