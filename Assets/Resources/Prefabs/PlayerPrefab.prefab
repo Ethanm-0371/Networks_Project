@@ -118,3 +118,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: ec4453d8c97c56a4eaccb0b3cad08337, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  isOwner: 0
+  sensitivity: 20
+  playerCam: {fileID: 0}

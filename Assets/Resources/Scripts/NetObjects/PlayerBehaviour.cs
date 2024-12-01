@@ -17,7 +17,7 @@ public class PlayerBehaviour : NetObject
     //bool rotationChanged = false;
     //private Quaternion lastRotation;
 
-    [SerializeField] float sensitivity = 5.0f;
+    [SerializeField] float sensitivity = 20.0f;
     [SerializeField] PlayerCamera playerCam;
 
     private void Awake()
@@ -30,7 +30,6 @@ public class PlayerBehaviour : NetObject
         if(isOwner)
         {
             HandleInput();
-            Rotate();
         }
     }
 
@@ -53,6 +52,15 @@ public class PlayerBehaviour : NetObject
         if (Input.GetKey(KeyCode.D))
         {
             actionsInFrame.Add(new PlayerAction(PlayerAction.ActionType.MoveR));
+        }
+
+        float mouseX = Input.GetAxis("Mouse X");
+        float mouseY = Input.GetAxis("Mouse Y");
+
+        if (mouseX != 0 || mouseY != 0)
+        {
+            actionsInFrame.Add(new PlayerAction(PlayerAction.ActionType.Rotate, new List<string>() { (mouseX * sensitivity).ToString(), 
+                                                                                                     (mouseY * sensitivity).ToString() }));
         }
 
         if (actionsInFrame.Count > 0)
@@ -78,6 +86,8 @@ public class PlayerBehaviour : NetObject
                     Move(action.actionType, actions.frameDeltaTime);
                     break;
                 case PlayerAction.ActionType.Rotate:
+                    Rotate(float.Parse(action.parameters[0]) * actions.frameDeltaTime, 
+                           float.Parse(action.parameters[1]) * actions.frameDeltaTime);
                     break;
                 case PlayerAction.ActionType.None:
                 default:
@@ -119,13 +129,10 @@ public class PlayerBehaviour : NetObject
             
         }
     }
-    void Rotate()
+    void Rotate(float xIncrement, float yIncrement)
     {
-        float mouseX = Input.GetAxis("Mouse X") * sensitivity * Time.deltaTime;
-        float mouseY = Input.GetAxis("Mouse Y") * sensitivity * Time.deltaTime;
-
-        transform.Rotate(Vector3.up * mouseX);
-        playerCam.transform.parent.Rotate(Vector3.right * -mouseY);
+        transform.Rotate(Vector3.up * xIncrement);
+        playerCam.transform.parent.Rotate(Vector3.right * -yIncrement);
     }
 
     public PlayerActionList? GetActionsList()
