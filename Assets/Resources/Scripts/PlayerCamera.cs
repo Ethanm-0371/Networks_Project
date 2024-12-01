@@ -17,7 +17,7 @@ public class PlayerCamera : MonoBehaviour
         //Update offset visual
         if (Input.GetKeyDown(KeyCode.T))
         {
-            SetParent(transform.parent);
+            transform.localPosition = offset;
         }
         if (Input.GetKeyDown(KeyCode.Z))
         {
