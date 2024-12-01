@@ -22,7 +22,7 @@ namespace Wrappers
         {
             {typeof(object),                       ClassIdentifyers.None}, // Acts as the "null" equivalent
             {typeof(UserData),                     ClassIdentifyers.UserData},
-            {typeof(PlayerActions),                ClassIdentifyers.PlayerActions},
+            {typeof(ActionsInFrame),                ClassIdentifyers.PlayerActions},
             {typeof(PlayerActionList),             ClassIdentifyers.PlayerActionsList},
             {typeof(Player),                       ClassIdentifyers.Player},
             {typeof(SceneLoadedData),              ClassIdentifyers.SceneLoadedData},
@@ -32,7 +32,7 @@ namespace Wrappers
         {
             {ClassIdentifyers.None,                typeof(object)}, // Acts as the "null" equivalent
             {ClassIdentifyers.UserData,            typeof(UserData)},
-            {ClassIdentifyers.PlayerActions,       typeof(PlayerActions)},
+            {ClassIdentifyers.PlayerActions,       typeof(ActionsInFrame)},
             {ClassIdentifyers.PlayerActionsList,   typeof(PlayerActionList)},
             {ClassIdentifyers.Player,              typeof(Player)},
             {ClassIdentifyers.SceneLoadedData,     typeof(SceneLoadedData)},
@@ -76,9 +76,9 @@ namespace Wrappers
     }
 
     [Serializable]
-    public struct PlayerActions : NetInfo
+    public struct PlayerAction : NetInfo
     {
-        public enum Actions
+        public enum ActionType
         {
             None,
             MoveF,
@@ -88,30 +88,31 @@ namespace Wrappers
             Rotate,
         }
 
-        public PlayerActions(List<Actions> actionsInOneFrame, List<string> parameter)
-        {
-            a = actionsInOneFrame;
-            p = parameter;
-        }
+        public ActionType actionType;
+        public List<string> parameters;
 
-        public List<Actions> a; //Action type
-        public List<string> p; //Parameters
+        public PlayerAction(ActionType actionType)
+        {
+            this.actionType = actionType;
+            parameters = new List<string>();
+        }
+        public PlayerAction(ActionType actionType, List<string> parameters)
+        {
+            this.actionType = actionType;
+            this.parameters = parameters;
+        }
 
         public byte[] Serialize()
         {
             MemoryStream stream = new MemoryStream();
             BinaryWriter writer = new BinaryWriter(stream);
 
-            writer.Write((short)a.Count);
-            foreach (var action in a)
-            {
-                writer.Write((char)action);
-            }
+            writer.Write((char)actionType);
 
-            writer.Write((short)p.Count);
-            foreach (var param in p)
+            writer.Write((short)parameters.Count);
+            foreach (var param in parameters)
             {
-                writer.Write(param); ;
+                writer.Write(param);
             }
 
             byte[] data = stream.ToArray();
@@ -121,24 +122,19 @@ namespace Wrappers
 
             return data;
         }
+
         public void Deserialize(byte[] data)
         {
-            a = new List<Actions>();
-            p = new List<string>();
-
             MemoryStream stream = new MemoryStream(data);
             BinaryReader reader = new BinaryReader(stream);
 
-            short actionAmount = reader.ReadInt16();
-            for (int i = 0; i < actionAmount; i++)
-            {
-                a.Add((Actions)reader.ReadChar());
-            }
+            actionType = (ActionType)reader.ReadChar();
+            parameters = new List<string>();
 
             short paramAmount = reader.ReadInt16();
             for (int i = 0; i < paramAmount; i++)
             {
-                p.Add(reader.ReadString());
+                parameters.Add(reader.ReadString());
             }
 
             stream.Close();
@@ -146,16 +142,91 @@ namespace Wrappers
     }
 
     [Serializable]
+    public struct ActionsInFrame : NetInfo
+    {
+        public List<PlayerAction> actionsInOneFrame;
+        public float frameDeltaTime;
+
+        public ActionsInFrame(List<PlayerAction> actionsInOneFrame, float frameDeltaTime)
+        {
+            this.actionsInOneFrame = new List<PlayerAction>(actionsInOneFrame);
+            this.frameDeltaTime = frameDeltaTime;
+        }
+
+        public byte[] Serialize()
+        {
+            List<byte[]> dataToAdd = new List<byte[]>();
+            int size = 0;
+
+            //Amount of actions
+            dataToAdd.Add(BitConverter.GetBytes((short)actionsInOneFrame.Count));
+            size += 2;
+
+            //The actions themselves preceded by their size
+            foreach (var action in actionsInOneFrame)
+            {
+                byte[] serializedAction = action.Serialize();
+                byte[] actionSize = BitConverter.GetBytes((short)serializedAction.Length);
+
+                dataToAdd.Add(actionSize);
+                dataToAdd.Add(serializedAction);
+
+                size += 2 + serializedAction.Length;
+            }
+
+            //The deltaTime
+            dataToAdd.Add(BitConverter.GetBytes(frameDeltaTime));
+            size += 4;
+
+            //Put all of it in the resulting byte[]
+            byte[] result = new byte[size];
+            size = 0;
+
+            foreach (var item in dataToAdd)
+            {
+                Buffer.BlockCopy(item, 0, result, size, item.Length);
+                size += item.Length;
+            }
+
+            return result;
+        }
+        public void Deserialize(byte[] data)
+        {
+            actionsInOneFrame = new List<PlayerAction>();
+
+            short actionAmount = BitConverter.ToInt16(data, 0);
+
+            int offset = 2;
+
+            for (int i = 0; i < actionAmount; i++)
+            {
+                short actionSize = BitConverter.ToInt16(data, offset);
+                offset += 2;
+
+                byte[] actionToDecode = new byte[actionSize];
+                Buffer.BlockCopy(data, offset, actionToDecode, 0, actionSize);
+                offset += actionSize;
+
+                PlayerAction actionToAdd = new PlayerAction();
+                actionToAdd.Deserialize(actionToDecode);
+                actionsInOneFrame.Add(actionToAdd);
+            }
+
+            frameDeltaTime = BitConverter.ToSingle(data, offset);
+        }
+    }
+
+    [Serializable]
     public struct PlayerActionList : NetInfo
     {
-        public PlayerActionList(uint playerID, List<PlayerActions> actionList)
+        public PlayerActionList(uint playerID, List<ActionsInFrame> frameList)
         {
             id = playerID;
-            l = new List<PlayerActions>(actionList);
+            l = new List<ActionsInFrame>(frameList);
         }
 
         public uint id; //Id of the player
-        public List<PlayerActions> l; //List of actions
+        public List<ActionsInFrame> l; //List of actions
 
         public byte[] Serialize()
         {
@@ -200,7 +271,7 @@ namespace Wrappers
 
             for (int i = 0; i < numberOfActions; i++)
             {
-                l = new List<PlayerActions>();
+                l = new List<ActionsInFrame>();
 
                 short actionSize = BitConverter.ToInt16(data, offset);
                 offset += 2;
@@ -208,7 +279,7 @@ namespace Wrappers
                 byte[] actionToDecode = new byte[actionSize];
                 Buffer.BlockCopy(data, offset, actionToDecode, 0, actionSize);
 
-                PlayerActions actionsToAdd = new PlayerActions();
+                ActionsInFrame actionsToAdd = new ActionsInFrame();
 
                 actionsToAdd.Deserialize(actionToDecode);
 

@@ -11,7 +11,7 @@ public class PlayerBehaviour : NetObject
 
     // Last state variables
     bool actionsChanged = false;
-    List<PlayerActions> pendingActions = new List<PlayerActions>();
+    List<ActionsInFrame> pendingActions = new List<ActionsInFrame>();
     bool positionChanged = false;
     Vector3 lastPosition;
     //bool rotationChanged = false;
@@ -36,28 +36,28 @@ public class PlayerBehaviour : NetObject
 
     void HandleInput()
     {
-        List<PlayerActions.Actions> actionsInFrame = new List<PlayerActions.Actions>();
+        List<PlayerAction> actionsInFrame = new List<PlayerAction>();
 
         if (Input.GetKey(KeyCode.W))
         {
-            actionsInFrame.Add(PlayerActions.Actions.MoveF);
+            actionsInFrame.Add(new PlayerAction(PlayerAction.ActionType.MoveF));
         }
         if (Input.GetKey(KeyCode.S))
         {
-            actionsInFrame.Add(PlayerActions.Actions.MoveB);
+            actionsInFrame.Add(new PlayerAction(PlayerAction.ActionType.MoveB));
         }
         if (Input.GetKey(KeyCode.A))
         {
-            actionsInFrame.Add(PlayerActions.Actions.MoveL);
+            actionsInFrame.Add(new PlayerAction(PlayerAction.ActionType.MoveL));
         }
         if (Input.GetKey(KeyCode.D))
         {
-            actionsInFrame.Add(PlayerActions.Actions.MoveR);
+            actionsInFrame.Add(new PlayerAction(PlayerAction.ActionType.MoveR));
         }
 
         if (actionsInFrame.Count > 0)
         {
-            PlayerActions actionsToExecute = new PlayerActions(actionsInFrame, new List<string>() { Time.deltaTime.ToString() });
+            ActionsInFrame actionsToExecute = new ActionsInFrame(actionsInFrame, Time.deltaTime);
 
             ExecuteActions(actionsToExecute);
 
@@ -65,21 +65,21 @@ public class PlayerBehaviour : NetObject
         }
     }
 
-    public void ExecuteActions(PlayerActions actions)
+    public void ExecuteActions(ActionsInFrame actions)
     {
-        foreach (var action in actions.a)
+        foreach (var action in actions.actionsInOneFrame)
         {
-            switch (action)
+            switch (action.actionType)
             {
-                case PlayerActions.Actions.MoveF:
-                case PlayerActions.Actions.MoveB:
-                case PlayerActions.Actions.MoveL:
-                case PlayerActions.Actions.MoveR:
-                    Move(action, float.Parse(actions.p[0]));
+                case PlayerAction.ActionType.MoveF:
+                case PlayerAction.ActionType.MoveB:
+                case PlayerAction.ActionType.MoveL:
+                case PlayerAction.ActionType.MoveR:
+                    Move(action.actionType, actions.frameDeltaTime);
                     break;
-                case PlayerActions.Actions.Rotate:
+                case PlayerAction.ActionType.Rotate:
                     break;
-                case PlayerActions.Actions.None:
+                case PlayerAction.ActionType.None:
                 default:
                     break;
             }
@@ -88,25 +88,25 @@ public class PlayerBehaviour : NetObject
         
     }
 
-    void Move(PlayerActions.Actions action, float deltaTime)
+    void Move(PlayerAction.ActionType action, float deltaTime)
     {
         Vector3 direction = Vector3.zero;
 
         switch (action)
         {
-            case PlayerActions.Actions.MoveF:
+            case PlayerAction.ActionType.MoveF:
                 direction = transform.forward;
                 break;
-            case PlayerActions.Actions.MoveB:
+            case PlayerAction.ActionType.MoveB:
                 direction = -transform.forward;
                 break;
-            case PlayerActions.Actions.MoveL:
+            case PlayerAction.ActionType.MoveL:
                 direction = -transform.right;
                 break;
-            case PlayerActions.Actions.MoveR:
+            case PlayerAction.ActionType.MoveR:
                 direction = transform.right;
                 break;
-            case PlayerActions.Actions.None:
+            case PlayerAction.ActionType.None:
             default:
                 break;
         }
