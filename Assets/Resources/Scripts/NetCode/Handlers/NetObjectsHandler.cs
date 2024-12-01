@@ -43,11 +43,17 @@ public class NetObjectsHandler : MonoBehaviour
 
     private void InitPlayer(GameObject GO, Wrappers.Player info)
     {
-        if (info.o != GameClient.Singleton.userName) { return; }
+        if (info.o != GameClient.Singleton.userName) 
+        {
+            GO.GetComponentInChildren<TMPro.TextMeshProUGUI>().text = info.o;
+            return; 
+        }
 
         GO.GetComponent<PlayerBehaviour>().isOwner = true;
         GameClient.Singleton.ownedPlayerGO = GO;
         
         Camera.main.gameObject.GetComponent<PlayerCamera>().SetParent(GO.transform);
+
+        GO.GetComponentInChildren<Canvas>().gameObject.SetActive(false);
     }
 }
