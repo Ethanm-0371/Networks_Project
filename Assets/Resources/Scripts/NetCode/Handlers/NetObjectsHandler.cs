@@ -46,6 +46,10 @@ public class NetObjectsHandler : MonoBehaviour
         if (info.o != GameClient.Singleton.userName) 
         {
             GO.GetComponentInChildren<TMPro.TextMeshProUGUI>().text = info.o;
+
+            GO.transform.position = info.position;
+            GO.transform.rotation = info.rotation;
+
             return; 
         }
 

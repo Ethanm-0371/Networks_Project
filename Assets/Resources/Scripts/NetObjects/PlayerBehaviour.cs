@@ -181,14 +181,17 @@ public class PlayerBehaviour : NetObject
         return changes;
     }
 
-
+    public override NetInfo GetNetInfo()
+    {
+        return new Player(this);
+    }
     //In the case of the player, this serves as state confirmation
-    public override void UpdateObject(object info)
+    public override void UpdateObject(NetInfo info)
     {
         Wrappers.Player pw = (Wrappers.Player)info;
 
-        transform.position = pw.p;
-        transform.rotation = pw.r;
+        transform.position = pw.position;
+        transform.rotation = pw.rotation;
     }
 
     public void AttachCamera()

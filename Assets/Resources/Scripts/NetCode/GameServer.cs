@@ -16,6 +16,7 @@ public class GameServer : MonoBehaviour
     Dictionary<EndPoint, string> connectedUsers = new Dictionary<EndPoint, string>();
     public Dictionary<uint, NetInfo> netObjectsInfo = new Dictionary<uint, NetInfo>();
 
+    Queue<(PacketType, object, EndPoint)> functionsQueue = new Queue<(PacketType, object, EndPoint)>();
     Dictionary<PacketType, Action<object, EndPoint>> functionsDictionary;
 
     private void Awake()
@@ -36,6 +37,16 @@ public class GameServer : MonoBehaviour
         #endregion
 
         StartServerFunctions();
+    }
+
+    private void Update()
+    {
+        if (functionsQueue.Count > 0)
+        {
+            //Maybe add foreach or while != 0
+            (PacketType, object, EndPoint) dequeuedFunction = functionsQueue.Dequeue();
+            functionsDictionary[dequeuedFunction.Item1](dequeuedFunction.Item2, dequeuedFunction.Item3);
+        }
     }
 
     public void Init()
@@ -70,7 +81,8 @@ public class GameServer : MonoBehaviour
             if (data[1] != 0) { decodedClass = PacketHandler.NewDecodeMultiPacket(data); }
             else              { decodedClass = PacketHandler.NewDecodeSinglePacket(data); }
 
-            functionsDictionary[decodedClass.Item1](decodedClass.Item2, Remote);
+            functionsQueue.Enqueue((decodedClass.Item1, decodedClass.Item2, Remote));
+            //functionsDictionary[decodedClass.Item1](decodedClass.Item2, Remote);
         }
     }
 
@@ -122,6 +134,13 @@ public class GameServer : MonoBehaviour
     {
         connectedUsers.Add(ep, playerData.userName);
     }
+    void UpdateNetObjsInfo()
+    {
+        foreach (var item in GetComponent<NetObjectsHandler>().netGameObjects)
+        {
+            netObjectsInfo[item.Key] = item.Value.GetComponent<NetObject>().GetNetInfo();
+        }
+    }
 
     public uint GenerateRandomID()
     {
@@ -148,6 +167,8 @@ public class GameServer : MonoBehaviour
 
         IPEndPoint ipep = new IPEndPoint(ep.GetIP(), ep.GetPort());
 
+        UpdateNetObjsInfo();
+
         //Since the whole dictionary must be sent, it can be encoded as a list
         List<NetInfo> objsInfo = new List<NetInfo>();
 
@@ -155,7 +176,6 @@ public class GameServer : MonoBehaviour
         {
             objsInfo.Add(new Wrappers.NetObjInfo(item.Key, item.Value));
         }
-
         PacketHandler.SendPacket(serverSocket, ipep, PacketType.netObjsDictionary, objsInfo);
         BroadCastPacket(PacketType.netObjsDictionary, objsInfo, ipep);
     }

@@ -2,16 +2,16 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class BasicEnemy : MonoBehaviour
+public class BasicEnemy : NetObject
 {
-    enum State
+    public enum State
     {
         None,
         Idle,
         Chase
     }
 
-    State currentState = State.Idle;
+    public State currentState = State.Idle;
 
     List<GameObject> playerList = new List<GameObject>();
     GameObject targetPlayer;
@@ -87,5 +87,19 @@ public class BasicEnemy : MonoBehaviour
     {
         Gizmos.DrawWireSphere(transform.position, detectionRadius);
         Gizmos.DrawWireSphere(transform.position, loseRadius);
+    }
+
+    public override NetInfo GetNetInfo()
+    {
+        return new Wrappers.BasicZombie(this);
+    }
+
+    public override void UpdateObject(NetInfo info)
+    {
+        Wrappers.BasicZombie bzw = (Wrappers.BasicZombie)info;
+
+        transform.position = bzw.position;
+        transform.rotation = bzw.rotation;
+        currentState = bzw.currentState;
     }
 }

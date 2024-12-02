@@ -47,10 +47,10 @@ public class SerializationPlaygroundEditor : Editor
                 PlayerSerialization();
 
                 playerToEncode.id = (uint)uintConversion;
-                playerToEncode.r.x = quaternionConversion.x;
-                playerToEncode.r.y = quaternionConversion.y;
-                playerToEncode.r.z = quaternionConversion.z;
-                playerToEncode.r.w = quaternionConversion.w;
+                playerToEncode.rotation.x = quaternionConversion.x;
+                playerToEncode.rotation.y = quaternionConversion.y;
+                playerToEncode.rotation.z = quaternionConversion.z;
+                playerToEncode.rotation.w = quaternionConversion.w;
 
                 classToSerialize = playerToEncode;
                 break;
@@ -95,7 +95,7 @@ public class SerializationPlaygroundEditor : Editor
     {
         uintConversion = EditorGUILayout.IntField("ID", uintConversion);
         playerToEncode.o = EditorGUILayout.TextField("Owner", playerToEncode.o);
-        playerToEncode.p = EditorGUILayout.Vector3Field("Position", playerToEncode.p);
+        playerToEncode.position = EditorGUILayout.Vector3Field("Position", playerToEncode.position);
         quaternionConversion = EditorGUILayout.Vector4Field("Rotation", quaternionConversion);
     }
 }

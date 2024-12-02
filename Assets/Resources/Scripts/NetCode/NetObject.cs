@@ -6,5 +6,6 @@ public abstract class NetObject : MonoBehaviour
 {
     public uint netID { get; set; }
 
-    public abstract void UpdateObject(object info);
+    public abstract NetInfo GetNetInfo();
+    public abstract void UpdateObject(NetInfo info);
 }

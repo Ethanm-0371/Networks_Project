@@ -295,22 +295,22 @@ namespace Wrappers
         {
             id = netID;
             o = ownerName;
-            p = Vector3.zero;
-            r = Quaternion.identity;
+            position = Vector3.zero;
+            rotation = Quaternion.identity;
         }
         public Player(PlayerBehaviour instance)
         {
             id = instance.netID;
             o = "";
-            p = instance.transform.position;
-            r = instance.transform.rotation;
+            position = instance.transform.position;
+            rotation = instance.transform.rotation;
         }
 
         // Shortened names equals more space to add in buffer
         public uint id;
         public string o; //Owner name
-        public Vector3 p; //Position
-        public Quaternion r; //Rotation
+        public Vector3 position; //Position
+        public Quaternion rotation; //Rotation
 
         public byte[] Serialize()
         {
@@ -320,14 +320,14 @@ namespace Wrappers
             writer.Write(id);
             writer.Write(o);
 
-            writer.Write(p.x);
-            writer.Write(p.y);
-            writer.Write(p.z);
+            writer.Write(position.x);
+            writer.Write(position.y);
+            writer.Write(position.z);
 
-            writer.Write(r.x);
-            writer.Write(r.y);
-            writer.Write(r.z);
-            writer.Write(r.w);
+            writer.Write(rotation.x);
+            writer.Write(rotation.y);
+            writer.Write(rotation.z);
+            writer.Write(rotation.w);
 
             byte[] data = stream.ToArray();
 
@@ -345,14 +345,72 @@ namespace Wrappers
             id = reader.ReadUInt32();
             o = reader.ReadString();
 
-            p.x = reader.ReadSingle();
-            p.y = reader.ReadSingle();
-            p.z = reader.ReadSingle();
+            position.x = reader.ReadSingle();
+            position.y = reader.ReadSingle();
+            position.z = reader.ReadSingle();
             
-            r.x = reader.ReadSingle();
-            r.y = reader.ReadSingle();
-            r.z = reader.ReadSingle();
-            r.w = reader.ReadSingle();
+            rotation.x = reader.ReadSingle();
+            rotation.y = reader.ReadSingle();
+            rotation.z = reader.ReadSingle();
+            rotation.w = reader.ReadSingle();
+
+            stream.Close();
+        }
+    }
+
+    [Serializable]
+    public struct BasicZombie : NetInfo
+    {
+        public Vector3 position;
+        public Quaternion rotation;
+        public BasicEnemy.State currentState;
+
+        public BasicZombie(BasicEnemy instance)
+        {
+            position = instance.transform.position;
+            rotation = instance.transform.rotation;
+            currentState = instance.currentState;
+        }
+
+        public byte[] Serialize()
+        {
+            MemoryStream stream = new MemoryStream();
+            BinaryWriter writer = new BinaryWriter(stream);
+
+            writer.Write(position.x);
+            writer.Write(position.y);
+            writer.Write(position.z);
+
+            writer.Write(rotation.x);
+            writer.Write(rotation.y);
+            writer.Write(rotation.z);
+            writer.Write(rotation.w);
+
+            writer.Write((char)currentState);
+
+            byte[] data = stream.ToArray();
+
+            stream.Close();
+            writer.Close();
+
+            return data;
+        }
+
+        public void Deserialize(byte[] data)
+        {
+            MemoryStream stream = new MemoryStream(data);
+            BinaryReader reader = new BinaryReader(stream);
+
+            position.x = reader.ReadSingle();
+            position.y = reader.ReadSingle();
+            position.z = reader.ReadSingle();
+
+            rotation.x = reader.ReadSingle();
+            rotation.y = reader.ReadSingle();
+            rotation.z = reader.ReadSingle();
+            rotation.w = reader.ReadSingle();
+
+            currentState = (BasicEnemy.State)reader.ReadChar();
 
             stream.Close();
         }
