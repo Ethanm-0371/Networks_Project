@@ -12,7 +12,7 @@ GameObject:
   - component: {fileID: 5654123955581938389}
   - component: {fileID: 7679069547985297477}
   m_Layer: 0
-  m_Name: EnemyPrefab
+  m_Name: BasicEnemyPrefab
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -69,6 +69,9 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 304744a213fdb924b8795e80b331851e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  detectionRadius: 5
+  loseRadius: 10
+  movementSpeed: 1
 --- !u!1 &1087542699624634840
 GameObject:
   m_ObjectHideFlags: 0
