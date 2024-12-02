@@ -6,6 +6,7 @@ using Wrappers;
 public class PlayerBehaviour : NetObject
 {
     public bool isOwner = false;
+    public string ownerName;
     float moveSpeed = 5f;
 
 
@@ -192,6 +193,28 @@ public class PlayerBehaviour : NetObject
 
         transform.position = pw.position;
         transform.rotation = pw.rotation;
+    }
+
+    public void InitPlayer(Wrappers.Player info)
+    {
+        ownerName = info.o;
+
+        if (ownerName != GameClient.Singleton.userName)
+        {
+            GetComponentInChildren<TMPro.TextMeshProUGUI>().text = ownerName;
+
+            transform.position = info.position;
+            transform.rotation = info.rotation;
+
+            return;
+        }
+
+        isOwner = true;
+        GameClient.Singleton.ownedPlayerGO = gameObject;
+
+        AttachCamera();
+
+        GetComponentInChildren<Canvas>().gameObject.SetActive(false);
     }
 
     public void AttachCamera()

@@ -301,7 +301,7 @@ namespace Wrappers
         public Player(PlayerBehaviour instance)
         {
             id = instance.netID;
-            o = "";
+            o = instance.ownerName;
             position = instance.transform.position;
             rotation = instance.transform.rotation;
         }

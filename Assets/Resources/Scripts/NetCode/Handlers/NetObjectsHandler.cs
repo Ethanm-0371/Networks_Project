@@ -37,27 +37,7 @@ public class NetObjectsHandler : MonoBehaviour
 
         if (objectType == typeof(Wrappers.Player))
         {
-            InitPlayer(newNetObj, (Wrappers.Player)objectToInstantiate);
+            newNetObj.GetComponent<PlayerBehaviour>().InitPlayer((Wrappers.Player)objectToInstantiate);
         }
-    }
-
-    private void InitPlayer(GameObject GO, Wrappers.Player info)
-    {
-        if (info.o != GameClient.Singleton.userName) 
-        {
-            GO.GetComponentInChildren<TMPro.TextMeshProUGUI>().text = info.o;
-
-            GO.transform.position = info.position;
-            GO.transform.rotation = info.rotation;
-
-            return; 
-        }
-
-        GO.GetComponent<PlayerBehaviour>().isOwner = true;
-        GameClient.Singleton.ownedPlayerGO = GO;
-
-        GO.GetComponent<PlayerBehaviour>().AttachCamera();
-
-        GO.GetComponentInChildren<Canvas>().gameObject.SetActive(false);
     }
 }
