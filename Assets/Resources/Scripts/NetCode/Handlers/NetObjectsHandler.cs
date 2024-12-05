@@ -8,6 +8,7 @@ public class NetObjectsHandler : MonoBehaviour
     {
         { typeof(object),        "" },
         { typeof(Wrappers.Player), "PlayerPrefab" },
+        { typeof(Wrappers.BasicZombie), "BasicEnemyPrefab" },
     };
 
     public Dictionary<uint, GameObject> netGameObjects = new Dictionary<uint, GameObject>();
@@ -18,19 +19,21 @@ public class NetObjectsHandler : MonoBehaviour
         {
             if (netGameObjects.ContainsKey(entry.id))
             {
+                netGameObjects[entry.id].transform.position = entry.position;
+                netGameObjects[entry.id].transform.rotation = entry.rotation;
                 netGameObjects[entry.id].GetComponent<NetObject>().UpdateObject(entry.objectInfo);
             }
             else
             {
-                InstantiateGameObject(entry.id, entry.objectInfo);
+                InstantiateGameObject(entry.id, entry.objectInfo, entry.position, entry.rotation);
             }
         }
     }
 
-    private void InstantiateGameObject(uint netID, object objectToInstantiate)
+    private void InstantiateGameObject(uint netID, object objectToInstantiate, Vector3 position, Quaternion rotation)
     {
         Type objectType = objectToInstantiate.GetType();
-        GameObject newNetObj = (GameObject)Instantiate(Resources.Load("Prefabs/" + prefabPaths[objectType]));
+        GameObject newNetObj = (GameObject)Instantiate(Resources.Load("Prefabs/" + prefabPaths[objectType]), position, rotation);
 
         newNetObj.GetComponent<NetObject>().netID = netID;
         netGameObjects.Add(netID, newNetObj);

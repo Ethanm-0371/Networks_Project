@@ -14,6 +14,7 @@ namespace Wrappers
             PlayerActions,
             PlayerActionsList,
             Player,
+            BasicZombie,
             SceneLoadedData,
             NetObjInfo,
         }
@@ -25,6 +26,7 @@ namespace Wrappers
             {typeof(ActionsInFrame),                ClassIdentifyers.PlayerActions},
             {typeof(PlayerActionList),             ClassIdentifyers.PlayerActionsList},
             {typeof(Player),                       ClassIdentifyers.Player},
+            {typeof(BasicZombie),                  ClassIdentifyers.BasicZombie},
             {typeof(SceneLoadedData),              ClassIdentifyers.SceneLoadedData},
             {typeof(NetObjInfo),                   ClassIdentifyers.NetObjInfo},
         };
@@ -35,6 +37,7 @@ namespace Wrappers
             {ClassIdentifyers.PlayerActions,       typeof(ActionsInFrame)},
             {ClassIdentifyers.PlayerActionsList,   typeof(PlayerActionList)},
             {ClassIdentifyers.Player,              typeof(Player)},
+            {ClassIdentifyers.BasicZombie,         typeof(BasicZombie)},
             {ClassIdentifyers.SceneLoadedData,     typeof(SceneLoadedData)},
             {ClassIdentifyers.NetObjInfo,          typeof(NetObjInfo)},
         };
@@ -295,24 +298,18 @@ namespace Wrappers
         {
             id = netID;
             o = ownerName;
-            position = Vector3.zero;
-            rotation = Quaternion.identity;
             camPivot = Quaternion.identity;
         }
         public Player(PlayerBehaviour instance)
         {
             id = instance.netID;
             o = instance.ownerName;
-            position = instance.transform.position;
-            rotation = instance.transform.rotation;
             camPivot = instance.camPivot.transform.rotation;
         }
 
         // Shortened names equals more space to add in buffer
         public uint id;
         public string o; //Owner name
-        public Vector3 position; //Position
-        public Quaternion rotation; //Rotation
         public Quaternion camPivot; //Rotation of the cam pivot
 
         public byte[] Serialize()
@@ -322,15 +319,6 @@ namespace Wrappers
 
             writer.Write(id);
             writer.Write(o);
-
-            writer.Write(position.x);
-            writer.Write(position.y);
-            writer.Write(position.z);
-
-            writer.Write(rotation.x);
-            writer.Write(rotation.y);
-            writer.Write(rotation.z);
-            writer.Write(rotation.w);
             
             writer.Write(camPivot.x);
             writer.Write(camPivot.y);
@@ -352,15 +340,6 @@ namespace Wrappers
 
             id = reader.ReadUInt32();
             o = reader.ReadString();
-
-            position.x = reader.ReadSingle();
-            position.y = reader.ReadSingle();
-            position.z = reader.ReadSingle();
-            
-            rotation.x = reader.ReadSingle();
-            rotation.y = reader.ReadSingle();
-            rotation.z = reader.ReadSingle();
-            rotation.w = reader.ReadSingle();
             
             camPivot.x = reader.ReadSingle();
             camPivot.y = reader.ReadSingle();
@@ -374,14 +353,10 @@ namespace Wrappers
     [Serializable]
     public struct BasicZombie : NetInfo
     {
-        public Vector3 position;
-        public Quaternion rotation;
         public BasicEnemy.State currentState;
 
         public BasicZombie(BasicEnemy instance)
         {
-            position = instance.transform.position;
-            rotation = instance.transform.rotation;
             currentState = instance.currentState;
         }
 
@@ -389,15 +364,6 @@ namespace Wrappers
         {
             MemoryStream stream = new MemoryStream();
             BinaryWriter writer = new BinaryWriter(stream);
-
-            writer.Write(position.x);
-            writer.Write(position.y);
-            writer.Write(position.z);
-
-            writer.Write(rotation.x);
-            writer.Write(rotation.y);
-            writer.Write(rotation.z);
-            writer.Write(rotation.w);
 
             writer.Write((char)currentState);
 
@@ -413,15 +379,6 @@ namespace Wrappers
         {
             MemoryStream stream = new MemoryStream(data);
             BinaryReader reader = new BinaryReader(stream);
-
-            position.x = reader.ReadSingle();
-            position.y = reader.ReadSingle();
-            position.z = reader.ReadSingle();
-
-            rotation.x = reader.ReadSingle();
-            rotation.y = reader.ReadSingle();
-            rotation.z = reader.ReadSingle();
-            rotation.w = reader.ReadSingle();
 
             currentState = (BasicEnemy.State)reader.ReadChar();
 
@@ -470,27 +427,53 @@ namespace Wrappers
     {
         public uint id;
         public NetInfo objectInfo;
+        public Vector3 position;
+        public Quaternion rotation;
 
-        public NetObjInfo(uint id, NetInfo objectInfo)
+        public NetObjInfo(uint id, NetInfo objectInfo, Vector3 pos, Quaternion rot)
         {
             this.id = id;
             this.objectInfo = objectInfo;
+            position = pos;
+            rotation = rot;
         }
 
         public byte[] Serialize()
         {
             byte[] serializedID = BitConverter.GetBytes(id);
 
+
             byte[] serializedType = new byte[1]; 
             serializedType[0] = (byte)Types.encodeTypes[objectInfo.GetType()];
 
+
             byte[] serializedClass = objectInfo.Serialize();
 
-            byte[] result = new byte[serializedID.Length + 1 + serializedClass.Length];
+
+            MemoryStream stream = new MemoryStream();
+            BinaryWriter writer = new BinaryWriter(stream);
+
+            writer.Write(position.x);
+            writer.Write(position.y);
+            writer.Write(position.z);
+
+            writer.Write(rotation.x);
+            writer.Write(rotation.y);
+            writer.Write(rotation.z);
+            writer.Write(rotation.w);
+
+            byte[] transformData = stream.ToArray();
+
+            stream.Close();
+            writer.Close();
+
+
+            byte[] result = new byte[serializedID.Length + 1 + serializedClass.Length + transformData.Length];
 
             Buffer.BlockCopy(serializedID, 0, result, 0, serializedID.Length);
             Buffer.BlockCopy(serializedType, 0, result, serializedID.Length, 1);
             Buffer.BlockCopy(serializedClass, 0, result, serializedID.Length + 1, serializedClass.Length);
+            Buffer.BlockCopy(transformData, 0, result, serializedID.Length + 1 + serializedClass.Length, transformData.Length);
 
             return result;
         }
@@ -499,15 +482,36 @@ namespace Wrappers
         {
             id = BitConverter.ToUInt32(data, 0);
 
+
             Types.ClassIdentifyers classType = (Types.ClassIdentifyers)data[4];
 
-            byte[] classToDecode = new byte[data.Length - 5]; //4 from the uint and 1 from the type
-            Buffer.BlockCopy(data, 5, classToDecode, 0, data.Length - 5);
+
+            byte[] classToDecode = new byte[data.Length - 5 - (sizeof(float) * 7)]; //4 from the uint and 1 from the type and plus transform data
+            Buffer.BlockCopy(data, 5, classToDecode, 0, data.Length - 5 - (sizeof(float) * 7));
+
 
             NetInfo classInstance = (NetInfo)Activator.CreateInstance(Types.decodeTypes[classType]);
             classInstance.Deserialize(classToDecode);
 
             objectInfo = classInstance;
+
+
+            byte[] transformData = new byte[sizeof(float) * 7];
+            Buffer.BlockCopy(data, 5 + classToDecode.Length, transformData, 0, sizeof(float) * 7);
+
+            MemoryStream stream = new MemoryStream(transformData);
+            BinaryReader reader = new BinaryReader(stream);
+
+            position.x = reader.ReadSingle();
+            position.y = reader.ReadSingle();
+            position.z = reader.ReadSingle();
+
+            rotation.x = reader.ReadSingle();
+            rotation.y = reader.ReadSingle();
+            rotation.z = reader.ReadSingle();
+            rotation.w = reader.ReadSingle();
+
+            stream.Close();
         }
     }
 }

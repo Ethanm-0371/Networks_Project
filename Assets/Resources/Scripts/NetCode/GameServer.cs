@@ -141,6 +141,31 @@ public class GameServer : MonoBehaviour
             netObjectsInfo[item.Key] = item.Value.GetComponent<NetObject>().GetNetInfo();
         }
     }
+    List<NetInfo> GetNetInfoDictionaryList()
+    {
+        UpdateNetObjsInfo();
+
+        var netObjDict = GetComponent<NetObjectsHandler>().netGameObjects;
+
+        //Since the whole dictionary must be sent, it can be encoded as a list
+        List<NetInfo> objsInfo = new List<NetInfo>();
+
+        foreach (var item in netObjectsInfo)
+        {
+            Vector3 targetPos = default;
+            Quaternion targetRot = default;
+
+            if (netObjDict.TryGetValue(item.Key, out var netObj))
+            {
+                targetPos = netObj.transform.position;
+                targetRot = netObj.transform.rotation;
+            }
+
+            objsInfo.Add(new Wrappers.NetObjInfo(item.Key, item.Value, targetPos, targetRot));
+        }
+
+        return objsInfo;
+    }
 
     public uint GenerateRandomID()
     {
@@ -167,17 +192,11 @@ public class GameServer : MonoBehaviour
 
         IPEndPoint ipep = new IPEndPoint(ep.GetIP(), ep.GetPort());
 
-        UpdateNetObjsInfo();
+        List<NetInfo> dictionaryToSend = GetNetInfoDictionaryList();
+        if (dictionaryToSend.Count <= 0) { return; }
 
-        //Since the whole dictionary must be sent, it can be encoded as a list
-        List<NetInfo> objsInfo = new List<NetInfo>();
-
-        foreach (var item in netObjectsInfo)
-        {
-            objsInfo.Add(new Wrappers.NetObjInfo(item.Key, item.Value));
-        }
-        PacketHandler.SendPacket(serverSocket, ipep, PacketType.netObjsDictionary, objsInfo);
-        BroadCastPacket(PacketType.netObjsDictionary, objsInfo, ipep);
+        PacketHandler.SendPacket(serverSocket, ipep, PacketType.netObjsDictionary, dictionaryToSend);
+        BroadCastPacket(PacketType.netObjsDictionary, dictionaryToSend, ipep);
     }
 
     void HandlePlayerActions(Wrappers.PlayerActionList actionsListContainer, EndPoint senderEP)

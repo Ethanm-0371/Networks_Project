@@ -78,14 +78,14 @@ public class SerializationPlayground : MonoBehaviour
         writer.Write(playerToEncode.id);
         writer.Write(playerToEncode.o);
 
-        writer.Write(playerToEncode.position.x);
-        writer.Write(playerToEncode.position.y);
-        writer.Write(playerToEncode.position.z);
+        //writer.Write(playerToEncode.position.x);
+        //writer.Write(playerToEncode.position.y);
+        //writer.Write(playerToEncode.position.z);
 
-        writer.Write(playerToEncode.rotation.x);
-        writer.Write(playerToEncode.rotation.y);
-        writer.Write(playerToEncode.rotation.z);
-        writer.Write(playerToEncode.rotation.w);
+        //writer.Write(playerToEncode.rotation.x);
+        //writer.Write(playerToEncode.rotation.y);
+        //writer.Write(playerToEncode.rotation.z);
+        //writer.Write(playerToEncode.rotation.w);
 
         byte[] data = stream.ToArray();
 
@@ -104,14 +104,14 @@ public class SerializationPlayground : MonoBehaviour
         playerToReturn.id = reader.ReadUInt32();
         playerToReturn.o = reader.ReadString();
 
-        playerToReturn.position.x = reader.ReadSingle();
-        playerToReturn.position.y = reader.ReadSingle();
-        playerToReturn.position.z = reader.ReadSingle();
+        //playerToReturn.position.x = reader.ReadSingle();
+        //playerToReturn.position.y = reader.ReadSingle();
+        //playerToReturn.position.z = reader.ReadSingle();
 
-        playerToReturn.rotation.x = reader.ReadSingle();
-        playerToReturn.rotation.y = reader.ReadSingle();
-        playerToReturn.rotation.z = reader.ReadSingle();
-        playerToReturn.rotation.w = reader.ReadSingle();
+        //playerToReturn.rotation.x = reader.ReadSingle();
+        //playerToReturn.rotation.y = reader.ReadSingle();
+        //playerToReturn.rotation.z = reader.ReadSingle();
+        //playerToReturn.rotation.w = reader.ReadSingle();
 
         stream.Close();
 

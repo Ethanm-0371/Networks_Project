@@ -98,8 +98,6 @@ public class BasicEnemy : NetObject
     {
         Wrappers.BasicZombie bzw = (Wrappers.BasicZombie)info;
 
-        transform.position = bzw.position;
-        transform.rotation = bzw.rotation;
         currentState = bzw.currentState;
     }
 }

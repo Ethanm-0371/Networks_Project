@@ -190,9 +190,6 @@ public class PlayerBehaviour : NetObject
     public override void UpdateObject(NetInfo info)
     {
         Wrappers.Player pw = (Wrappers.Player)info;
-
-        transform.position = pw.position;
-        transform.rotation = pw.rotation;
     }
 
     public void InitPlayer(Wrappers.Player info)
@@ -203,8 +200,6 @@ public class PlayerBehaviour : NetObject
         {
             GetComponentInChildren<TMPro.TextMeshProUGUI>().text = ownerName;
 
-            transform.position = info.position;
-            transform.rotation = info.rotation;
             camPivot.rotation = info.camPivot;
 
             return;
