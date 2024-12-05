@@ -297,6 +297,7 @@ namespace Wrappers
             o = ownerName;
             position = Vector3.zero;
             rotation = Quaternion.identity;
+            camPivot = Quaternion.identity;
         }
         public Player(PlayerBehaviour instance)
         {
@@ -304,6 +305,7 @@ namespace Wrappers
             o = instance.ownerName;
             position = instance.transform.position;
             rotation = instance.transform.rotation;
+            camPivot = instance.camPivot.transform.rotation;
         }
 
         // Shortened names equals more space to add in buffer
@@ -311,6 +313,7 @@ namespace Wrappers
         public string o; //Owner name
         public Vector3 position; //Position
         public Quaternion rotation; //Rotation
+        public Quaternion camPivot; //Rotation of the cam pivot
 
         public byte[] Serialize()
         {
@@ -328,6 +331,11 @@ namespace Wrappers
             writer.Write(rotation.y);
             writer.Write(rotation.z);
             writer.Write(rotation.w);
+            
+            writer.Write(camPivot.x);
+            writer.Write(camPivot.y);
+            writer.Write(camPivot.z);
+            writer.Write(camPivot.w);
 
             byte[] data = stream.ToArray();
 
@@ -353,6 +361,11 @@ namespace Wrappers
             rotation.y = reader.ReadSingle();
             rotation.z = reader.ReadSingle();
             rotation.w = reader.ReadSingle();
+            
+            camPivot.x = reader.ReadSingle();
+            camPivot.y = reader.ReadSingle();
+            camPivot.z = reader.ReadSingle();
+            camPivot.w = reader.ReadSingle();
 
             stream.Close();
         }

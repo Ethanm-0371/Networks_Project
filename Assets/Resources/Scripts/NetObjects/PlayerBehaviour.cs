@@ -20,7 +20,7 @@ public class PlayerBehaviour : NetObject
 
     [SerializeField] float sensitivity = 20.0f;
     [SerializeField] PlayerCamera playerCam;
-    [SerializeField] GameObject camPivot;
+    public Transform camPivot;
 
     private void Awake()
     {
@@ -138,7 +138,7 @@ public class PlayerBehaviour : NetObject
     void Rotate(float xIncrement, float yIncrement)
     {
         transform.Rotate(Vector3.up * xIncrement);
-        camPivot.transform.Rotate(Vector3.right * -yIncrement);
+        camPivot.Rotate(Vector3.right * -yIncrement);
     }
 
     public PlayerActionList? GetActionsList()
@@ -205,6 +205,7 @@ public class PlayerBehaviour : NetObject
 
             transform.position = info.position;
             transform.rotation = info.rotation;
+            camPivot.rotation = info.camPivot;
 
             return;
         }
@@ -219,6 +220,6 @@ public class PlayerBehaviour : NetObject
 
     public void AttachCamera()
     {
-        Camera.main.gameObject.GetComponent<PlayerCamera>().SetParent(camPivot.transform);
+        Camera.main.gameObject.GetComponent<PlayerCamera>().SetParent(camPivot);
     }
 }

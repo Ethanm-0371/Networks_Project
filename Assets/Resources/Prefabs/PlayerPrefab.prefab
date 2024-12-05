@@ -74,7 +74,7 @@ MonoBehaviour:
   isOwner: 0
   sensitivity: 20
   playerCam: {fileID: 0}
-  camPivot: {fileID: 2178151899694898811}
+  camPivot: {fileID: 5752189182569971771}
 --- !u!1 &1087542699624634840
 GameObject:
   m_ObjectHideFlags: 0
