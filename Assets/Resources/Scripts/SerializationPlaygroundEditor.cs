@@ -46,7 +46,7 @@ public class SerializationPlaygroundEditor : Editor
             case PacketType.PlayerData:
                 PlayerSerialization();
 
-                playerToEncode.id = (uint)uintConversion;
+                //playerToEncode.id = (uint)uintConversion;
                 //playerToEncode.rotation.x = quaternionConversion.x;
                 //playerToEncode.rotation.y = quaternionConversion.y;
                 //playerToEncode.rotation.z = quaternionConversion.z;

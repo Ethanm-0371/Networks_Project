@@ -32,10 +32,6 @@ public class PlayerBehaviour : NetObject
         if(isOwner)
         {
             HandleInput();
-            if (Input.GetKeyDown(KeyCode.K))
-            {
-                Instantiate(Resources.Load("Prefabs/BasicEnemyPrefab"));
-            }
         }
     }
 

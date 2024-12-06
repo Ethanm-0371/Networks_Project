@@ -47,6 +47,23 @@ public class GameServer : MonoBehaviour
             (PacketType, object, EndPoint) dequeuedFunction = functionsQueue.Dequeue();
             functionsDictionary[dequeuedFunction.Item1](dequeuedFunction.Item2, dequeuedFunction.Item3);
         }
+
+        //Debug manual instantiate zombie
+        if (Input.GetKeyDown(KeyCode.K))
+        {
+            AddNewNetObjectInfo(new Wrappers.BasicZombie());
+        }
+        //Debug manual send dictionary
+        if (Input.GetKeyDown(KeyCode.N))
+        {
+            List<NetInfo> dictionaryList = GetNetInfoDictionaryList();
+
+            var clientEP = GameClient.Singleton.clientSocket.LocalEndPoint;
+            var ipep = new IPEndPoint(IPAddress.Loopback, clientEP.GetPort());
+
+            PacketHandler.SendPacket(serverSocket, ipep, PacketType.netObjsDictionary, dictionaryList);
+            BroadCastPacket(PacketType.netObjsDictionary, dictionaryList, clientEP);
+        }
     }
 
     public void Init()
@@ -134,6 +151,10 @@ public class GameServer : MonoBehaviour
     {
         connectedUsers.Add(ep, playerData.userName);
     }
+    public void AddNewNetObjectInfo(NetInfo objectToAdd)
+    {
+        netObjectsInfo.Add(GenerateRandomID(), objectToAdd);
+    }
     void UpdateNetObjsInfo()
     {
         foreach (var item in GetComponent<NetObjectsHandler>().netGameObjects)
@@ -186,9 +207,7 @@ public class GameServer : MonoBehaviour
 
     void HandleClientSceneLoaded(EndPoint ep)
     {
-        uint newObjectID = GenerateRandomID();
-
-        netObjectsInfo.Add(newObjectID, new Wrappers.Player(newObjectID, connectedUsers[ep]));
+        AddNewNetObjectInfo(new Wrappers.Player(connectedUsers[ep]));
 
         IPEndPoint ipep = new IPEndPoint(ep.GetIP(), ep.GetPort());
 

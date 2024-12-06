@@ -75,7 +75,7 @@ public class SerializationPlayground : MonoBehaviour
         MemoryStream stream = new MemoryStream();
         BinaryWriter writer = new BinaryWriter(stream);
 
-        writer.Write(playerToEncode.id);
+        //writer.Write(playerToEncode.id);
         writer.Write(playerToEncode.o);
 
         //writer.Write(playerToEncode.position.x);
@@ -101,7 +101,7 @@ public class SerializationPlayground : MonoBehaviour
 
         Player playerToReturn = new Player();
 
-        playerToReturn.id = reader.ReadUInt32();
+        //playerToReturn.id = reader.ReadUInt32();
         playerToReturn.o = reader.ReadString();
 
         //playerToReturn.position.x = reader.ReadSingle();

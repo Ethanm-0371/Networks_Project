@@ -294,21 +294,17 @@ namespace Wrappers
     [Serializable]
     public struct Player : NetInfo
     {
-        public Player(uint netID, string ownerName)
+        public Player(string ownerName)
         {
-            id = netID;
-            o = ownerName;
+            this.o = ownerName;
             camPivot = Quaternion.identity;
         }
         public Player(PlayerBehaviour instance)
         {
-            id = instance.netID;
             o = instance.ownerName;
             camPivot = instance.camPivot.transform.rotation;
         }
 
-        // Shortened names equals more space to add in buffer
-        public uint id;
         public string o; //Owner name
         public Quaternion camPivot; //Rotation of the cam pivot
 
@@ -317,7 +313,6 @@ namespace Wrappers
             MemoryStream stream = new MemoryStream();
             BinaryWriter writer = new BinaryWriter(stream);
 
-            writer.Write(id);
             writer.Write(o);
             
             writer.Write(camPivot.x);
@@ -338,7 +333,6 @@ namespace Wrappers
             MemoryStream stream = new MemoryStream(data);
             BinaryReader reader = new BinaryReader(stream);
 
-            id = reader.ReadUInt32();
             o = reader.ReadString();
             
             camPivot.x = reader.ReadSingle();
