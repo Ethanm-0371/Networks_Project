@@ -42,5 +42,13 @@ public class NetObjectsHandler : MonoBehaviour
         {
             newNetObj.GetComponent<PlayerBehaviour>().InitPlayer((Wrappers.Player)objectToInstantiate);
         }
+        if (objectType == typeof(Wrappers.BasicZombie))
+        {
+            var castWrapper = (Wrappers.BasicZombie)objectToInstantiate;
+
+            GameObject[] spawnList = GameObject.FindGameObjectsWithTag("SpawnPoint");
+
+            newNetObj.transform.position = spawnList[castWrapper.spawnPoint].transform.position;
+        }
     }
 }

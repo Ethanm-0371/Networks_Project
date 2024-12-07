@@ -348,10 +348,17 @@ namespace Wrappers
     public struct BasicZombie : NetInfo
     {
         public BasicEnemy.State currentState;
+        public int spawnPoint;
 
         public BasicZombie(BasicEnemy instance)
         {
             currentState = instance.currentState;
+            spawnPoint = -1;
+        }
+        public BasicZombie(int spawnRoom)
+        {
+            currentState = BasicEnemy.State.Idle;
+            this.spawnPoint = spawnRoom;
         }
 
         public byte[] Serialize()
@@ -360,6 +367,7 @@ namespace Wrappers
             BinaryWriter writer = new BinaryWriter(stream);
 
             writer.Write((char)currentState);
+            writer.Write((char)spawnPoint);
 
             byte[] data = stream.ToArray();
 
@@ -375,6 +383,7 @@ namespace Wrappers
             BinaryReader reader = new BinaryReader(stream);
 
             currentState = (BasicEnemy.State)reader.ReadChar();
+            spawnPoint = (int)reader.ReadChar();
 
             stream.Close();
         }

@@ -51,7 +51,8 @@ public class GameServer : MonoBehaviour
         //Debug manual instantiate zombie
         if (Input.GetKeyDown(KeyCode.K))
         {
-            AddNewNetObjectInfo(new Wrappers.BasicZombie());
+            int val = UnityEngine.Random.Range(0, 2);
+            AddNewNetObjectInfo(new Wrappers.BasicZombie(val));
         }
         //Debug manual send dictionary
         if (Input.GetKeyDown(KeyCode.N))
@@ -59,9 +60,7 @@ public class GameServer : MonoBehaviour
             List<NetInfo> dictionaryList = GetNetInfoDictionaryList();
 
             var clientEP = GameClient.Singleton.clientSocket.LocalEndPoint;
-            var ipep = new IPEndPoint(IPAddress.Loopback, clientEP.GetPort());
-
-            PacketHandler.SendPacket(serverSocket, ipep, PacketType.netObjsDictionary, dictionaryList);
+            
             BroadCastPacket(PacketType.netObjsDictionary, dictionaryList, clientEP);
         }
     }
