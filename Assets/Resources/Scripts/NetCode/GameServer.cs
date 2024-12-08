@@ -12,6 +12,7 @@ public class GameServer : MonoBehaviour
     public static GameServer Singleton { get; private set; }
 
     Socket serverSocket;
+    Thread mainReceivingThread;
 
     Dictionary<EndPoint, string> connectedUsers = new Dictionary<EndPoint, string>();
     public Dictionary<uint, NetInfo> netObjectsInfo = new Dictionary<uint, NetInfo>();
@@ -73,8 +74,8 @@ public class GameServer : MonoBehaviour
         serverSocket.Bind(ipep);
 
         //Start a new thread to receive messages.
-        Thread mainThread = new Thread(Receive);
-        mainThread.Start();
+        mainReceivingThread = new Thread(Receive);
+        mainReceivingThread.Start();
     }
 
     void Receive()
@@ -220,5 +221,13 @@ public class GameServer : MonoBehaviour
     void HandlePlayerActions(Wrappers.PlayerActionList actionsListContainer, EndPoint senderEP)
     {
         BroadCastPacket(PacketType.playerActionsList, actionsListContainer, senderEP);
+    }
+
+    private void OnDestroy()
+    {
+        mainReceivingThread.Abort(); //Forces thread termination before cleaning sockets
+
+        serverSocket.Shutdown(SocketShutdown.Both); //Disables sending and receiving
+        serverSocket.Close(); //Closes the connection and frees all associated resources
     }
 }

@@ -12,6 +12,7 @@ public class GameClient : MonoBehaviour
 
     public Socket clientSocket;
     public IPEndPoint serverEndPoint;
+    Thread mainReceivingThread;
 
     public string userName;
     public GameObject ownedPlayerGO = null;
@@ -67,8 +68,8 @@ public class GameClient : MonoBehaviour
         PacketHandler.SendPacket(clientSocket, serverEndPoint, PacketType.PlayerData, new Wrappers.UserData(username));
         userName = username;
 
-        Thread receive = new Thread(Receive);
-        receive.Start();
+        mainReceivingThread = new Thread(Receive);
+        mainReceivingThread.Start();
 
         StartCoroutine(SendPlayerActions(playerActionsSendFrequency));
     }
@@ -141,5 +142,13 @@ public class GameClient : MonoBehaviour
                 yield return null;
             }
         }
+    }
+
+    private void OnDestroy()
+    {
+        mainReceivingThread.Abort(); //Forces thread termination before cleaning sockets
+
+        clientSocket.Shutdown(SocketShutdown.Both); //Disables sending and receiving
+        clientSocket.Close(); //Closes the connection and frees all associated resources
     }
 }
