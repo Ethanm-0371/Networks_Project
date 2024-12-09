@@ -20,11 +20,17 @@ public class PlayerBehaviour : NetObject
 
     [SerializeField] float sensitivity = 20.0f;
     [SerializeField] PlayerCamera playerCam;
+    [SerializeField] Transform gunPivot;
     public Transform camPivot;
+
+    GameObject currentGun;
 
     private void Awake()
     {
         playerCam = Camera.main.GetComponent<PlayerCamera>();
+
+        //Testing befor having Level1. This should not go here
+        currentGun = (GameObject)Instantiate(Resources.Load("Prefabs/Gun"), gunPivot);
     }
 
     private void Update()
