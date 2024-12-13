@@ -18,6 +18,8 @@ public class PlayerCamera : MonoBehaviour
             offset.x *= -1;
             transform.localPosition = offset;
         }
+
+        CheckWalls();
     }
 
     public void SetParent(Transform parent)
@@ -25,5 +27,17 @@ public class PlayerCamera : MonoBehaviour
         transform.parent = parent;
 
         transform.localPosition = offset;
+    }
+
+    void CheckWalls()
+    {
+        if (Physics.Raycast(transform.parent.position, transform.position - transform.parent.position, out RaycastHit raycasthit, offset.magnitude))
+        {
+            transform.position = raycasthit.point;
+        }
+        else
+        {
+            transform.localPosition = offset;
+        }
     }
 }
