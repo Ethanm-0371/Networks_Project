@@ -62,15 +62,20 @@ public class Gun : MonoBehaviour
 
     public void Shoot(Vector3 origin, Vector3 direction)
     {
+        GameObject trail = (GameObject)Instantiate(Resources.Load("Prefabs/BulletTrail"));
+
         if (Physics.Raycast(origin, direction, out RaycastHit bulletHit, 999f))
         {
             lastDebugOrigin = gunMuzzle.position;
             debugHit = bulletHit.point; //This is where the bullet must land
             //Debug.Log($"Bullet hit {bulletHit.collider.gameObject.name}");
+
+            trail.GetComponent<BulletTrail>().SetTrailPositions(gunMuzzle.position, bulletHit.point);
         }
         else 
         { 
             Debug.Log("Bullet hit nothing.");
+            trail.GetComponent<BulletTrail>().SetTrailPositions(gunMuzzle.position, gunMuzzle.forward * 999f);
         }
     }
 
