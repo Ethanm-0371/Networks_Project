@@ -8,6 +8,8 @@ public class PlayerCamera : MonoBehaviour
 
     void Update()
     {
+        if (transform.parent == null) { return; } //This means Player object has not been instantiated yet
+
         //Update offset visual
         if (Input.GetKeyDown(KeyCode.T))
         {
