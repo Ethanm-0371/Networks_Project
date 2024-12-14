@@ -89,6 +89,7 @@ namespace Wrappers
             MoveL,
             MoveR,
             Rotate,
+            Shot,
         }
 
         public ActionType actionType;

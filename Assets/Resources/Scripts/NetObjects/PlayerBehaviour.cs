@@ -23,14 +23,15 @@ public class PlayerBehaviour : NetObject
     [SerializeField] Transform gunPivot;
     public Transform camPivot;
 
-    GameObject currentGun;
+    Gun currentGun;
 
     private void Awake()
     {
         playerCam = Camera.main.GetComponent<PlayerCamera>();
 
         //Testing befor having Level1. This should not go here
-        currentGun = (GameObject)Instantiate(Resources.Load("Prefabs/Gun"), gunPivot);
+        GameObject gunGO = (GameObject)Instantiate(Resources.Load("Prefabs/Gun"), gunPivot);
+        currentGun = gunGO.GetComponent<Gun>();
     }
 
     private void Update()
@@ -71,6 +72,11 @@ public class PlayerBehaviour : NetObject
                                                                                                      (mouseY * sensitivity).ToString() }));
         }
 
+        if (Input.GetButtonDown("Fire1"))
+        {
+            actionsInFrame.Add(currentGun.CalculateShot());
+        }
+
         if (actionsInFrame.Count > 0)
         {
             ActionsInFrame actionsToExecute = new ActionsInFrame(actionsInFrame, Time.deltaTime);
@@ -97,13 +103,14 @@ public class PlayerBehaviour : NetObject
                     Rotate(float.Parse(action.parameters[0]) * actions.frameDeltaTime, 
                            float.Parse(action.parameters[1]) * actions.frameDeltaTime);
                     break;
+                case PlayerAction.ActionType.Shot:
+                    ShootCurrentGun(action);
+                    break;
                 case PlayerAction.ActionType.None:
                 default:
                     break;
             }
         }
-
-        
     }
 
     void Move(PlayerAction.ActionType action, float deltaTime)
@@ -141,6 +148,13 @@ public class PlayerBehaviour : NetObject
     {
         transform.Rotate(Vector3.up * xIncrement);
         camPivot.Rotate(Vector3.right * -yIncrement);
+    }
+    void ShootCurrentGun(PlayerAction shotAction)
+    {
+        Vector3 origin = new Vector3(float.Parse(shotAction.parameters[0]), float.Parse(shotAction.parameters[1]), float.Parse(shotAction.parameters[2]));
+        Vector3 direction = new Vector3(float.Parse(shotAction.parameters[3]), float.Parse(shotAction.parameters[4]), float.Parse(shotAction.parameters[5]));
+
+        currentGun.Shoot(origin, direction);
     }
 
     public PlayerActionList? GetActionsList()
