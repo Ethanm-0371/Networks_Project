@@ -20,6 +20,8 @@ public class GameServer : MonoBehaviour
     Queue<(PacketType, object, EndPoint)> functionsQueue = new Queue<(PacketType, object, EndPoint)>();
     Dictionary<PacketType, Action<object, EndPoint>> functionsDictionary;
 
+    bool gameStarted = false;
+
     private void Awake()
     {
         #region Singleton
@@ -63,6 +65,12 @@ public class GameServer : MonoBehaviour
             var clientEP = GameClient.Singleton.clientSocket.LocalEndPoint;
             
             BroadCastPacket(PacketType.netObjsDictionary, dictionaryList, clientEP);
+        }
+
+        if (Input.GetKeyDown(KeyCode.B))
+        {
+            if (!gameStarted)
+                StartGame();
         }
     }
 
@@ -149,6 +157,9 @@ public class GameServer : MonoBehaviour
 
     void AddUserToDictionary(EndPoint ep, Wrappers.UserData playerData)
     {
+        //Remove this from here when added feature to check for server with a ping
+        if (GetNumberOfPlayers() > 4) { return; }
+
         connectedUsers.Add(ep, playerData.userName);
     }
     public void AddNewNetObjectInfo(NetInfo objectToAdd)
@@ -192,6 +203,48 @@ public class GameServer : MonoBehaviour
         return objsInfo;
     }
 
+    void StartGame()
+    {
+        gameStarted = true;
+
+        GameObject[] spawnList = GameObject.FindGameObjectsWithTag("PlayerSpawnPoint");
+        int currentSpawn = 0;
+
+        foreach (var item in GetComponent<NetObjectsHandler>().netGameObjects)
+        {
+            item.Value.transform.position = spawnList[currentSpawn].transform.position;
+            currentSpawn++;
+        }
+
+        UpdateNetObjsInfo();
+
+        GameObject.Find("LevelManager").GetComponent<Level1Manager>().enabled = true;
+    }
+    public void EndGame()
+    {
+        gameStarted = false;
+
+        int currentSpawn = 0;
+
+        foreach (var item in GetComponent<NetObjectsHandler>().netGameObjects)
+        {
+            if (currentSpawn < 4)
+            {
+                item.Value.transform.position = transform.position = new Vector3(-3f + (currentSpawn * 2), 0, 0);
+                currentSpawn++;
+                continue;
+            }
+
+            //Should destroy all other netGOs given that rn Scene is not
+            //being unloaded and NetObjsHandler does not destroy anything
+            //Destroy(item.Value);
+        }
+
+        UpdateNetObjsInfo();
+
+        GameObject.Find("LevelManager").GetComponent<Level1Manager>().enabled = true;
+    }
+
     public uint GenerateRandomID()
     {
         byte[] buffer = new byte[4];
@@ -208,9 +261,16 @@ public class GameServer : MonoBehaviour
         // Convert the byte array to a uint
         return id;
     }
+    public int GetNumberOfPlayers()
+    {
+        return connectedUsers.Count;
+    }
 
     void HandleClientSceneLoaded(EndPoint ep)
     {
+        //Remove this from here when added feature to check for server with a ping
+        if (GetNumberOfPlayers() > 4) { return; }
+
         AddNewNetObjectInfo(new Wrappers.Player(connectedUsers[ep]));
 
         IPEndPoint ipep = new IPEndPoint(ep.GetIP(), ep.GetPort());
