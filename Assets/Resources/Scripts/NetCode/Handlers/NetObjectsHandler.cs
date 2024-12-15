@@ -54,7 +54,7 @@ public class NetObjectsHandler : MonoBehaviour
         {
             var castWrapper = (Wrappers.BasicZombie)objectToInstantiate;
 
-            GameObject[] spawnList = GameObject.FindGameObjectsWithTag("SpawnPoint");
+            GameObject[] spawnList = GameObject.FindGameObjectsWithTag("ZombieSpawnPoint");
 
             newNetObj.transform.position = spawnList[castWrapper.spawnPoint].transform.position;
         }
