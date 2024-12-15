@@ -350,16 +350,19 @@ namespace Wrappers
     {
         public BasicEnemy.State currentState;
         public int spawnPoint;
+        public int currentHealth;
 
         public BasicZombie(BasicEnemy instance)
         {
             currentState = instance.currentState;
             spawnPoint = -1;
+            currentHealth = instance.currentHealth;
         }
         public BasicZombie(int spawnRoom)
         {
             currentState = BasicEnemy.State.Idle;
-            this.spawnPoint = spawnRoom;
+            spawnPoint = spawnRoom;
+            currentHealth = BasicEnemy.maxHealth;
         }
 
         public byte[] Serialize()
@@ -369,6 +372,7 @@ namespace Wrappers
 
             writer.Write((char)currentState);
             writer.Write((char)spawnPoint);
+            writer.Write(currentHealth);
 
             byte[] data = stream.ToArray();
 
@@ -385,6 +389,7 @@ namespace Wrappers
 
             currentState = (BasicEnemy.State)reader.ReadChar();
             spawnPoint = (int)reader.ReadChar();
+            currentHealth = reader.ReadInt32();
 
             stream.Close();
         }

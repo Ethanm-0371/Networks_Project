@@ -69,9 +69,11 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 304744a213fdb924b8795e80b331851e, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  currentState: 1
   detectionRadius: 5
   loseRadius: 10
   movementSpeed: 1
+  maxHealth: 100
 --- !u!1 &1087542699624634840
 GameObject:
   m_ObjectHideFlags: 0

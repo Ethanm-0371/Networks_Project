@@ -20,9 +20,13 @@ public class BasicEnemy : NetObject
     [SerializeField] float loseRadius = 15.0f;
     [SerializeField] float movementSpeed = 0.25f;
 
+    public static int maxHealth = 100;
+    public int currentHealth;
+
     private void Start()
     {
         GameObject.FindGameObjectsWithTag("Player", playerList);
+        currentHealth = maxHealth;
     }
 
     private void Update()
@@ -99,5 +103,21 @@ public class BasicEnemy : NetObject
         Wrappers.BasicZombie bzw = (Wrappers.BasicZombie)info;
 
         currentState = bzw.currentState;
+        currentHealth = bzw.currentHealth;
+    }
+
+    public void TakeDamage(int amount)
+    {
+        currentHealth -= amount;
+
+        if (currentHealth <= 0)
+        {
+            Destroy(gameObject);
+        }
+    }
+
+    private void OnDestroy()
+    {
+        OnDestroyObject.Invoke();
     }
 }

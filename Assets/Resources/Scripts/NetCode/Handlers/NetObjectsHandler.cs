@@ -15,6 +15,8 @@ public class NetObjectsHandler : MonoBehaviour
 
     public void CheckNetObjects(List<NetInfo> receivedList)
     {
+        //Must add a way to read objects that need to be destroyed.
+
         foreach (Wrappers.NetObjInfo entry in receivedList)
         {
             if (netGameObjects.ContainsKey(entry.id))
@@ -36,7 +38,13 @@ public class NetObjectsHandler : MonoBehaviour
         GameObject newNetObj = (GameObject)Instantiate(Resources.Load("Prefabs/" + prefabPaths[objectType]), position, rotation);
 
         newNetObj.GetComponent<NetObject>().netID = netID;
+
         netGameObjects.Add(netID, newNetObj);
+        newNetObj.GetComponent<NetObject>().OnDestroyObject.AddListener(() => 
+        { 
+            netGameObjects.Remove(netID);
+            GameServer.Singleton?.RemoveNetObjectInfo(netID);
+        });
 
         if (objectType == typeof(Wrappers.Player))
         {

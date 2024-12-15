@@ -363,6 +363,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   gunMuzzle: {fileID: 1572871185077827056}
+  gunDamage: 20
 --- !u!1 &5575601907343978322
 GameObject:
   m_ObjectHideFlags: 0

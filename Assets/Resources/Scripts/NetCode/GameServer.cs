@@ -155,6 +155,10 @@ public class GameServer : MonoBehaviour
     {
         netObjectsInfo.Add(GenerateRandomID(), objectToAdd);
     }
+    public void RemoveNetObjectInfo(uint netObjectID)
+    {
+        netObjectsInfo.Remove(netObjectID);
+    }
     void UpdateNetObjsInfo()
     {
         foreach (var item in GetComponent<NetObjectsHandler>().netGameObjects)

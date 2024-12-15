@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Events;
 
 public abstract class NetObject : MonoBehaviour
 {
@@ -8,4 +9,5 @@ public abstract class NetObject : MonoBehaviour
 
     public abstract NetInfo GetNetInfo();
     public abstract void UpdateObject(NetInfo info);
+    public UnityEvent OnDestroyObject;
 }

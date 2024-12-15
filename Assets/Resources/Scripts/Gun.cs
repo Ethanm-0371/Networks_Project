@@ -5,6 +5,7 @@ using UnityEngine;
 public class Gun : MonoBehaviour
 {
     [SerializeField] Transform gunMuzzle;
+    [SerializeField] int gunDamage = 20;
 
     Vector3 lastDebugOrigin;
     Vector3 debugHit = Vector3.zero;
@@ -71,6 +72,8 @@ public class Gun : MonoBehaviour
             //Debug.Log($"Bullet hit {bulletHit.collider.gameObject.name}");
 
             trail.GetComponent<BulletTrail>().SetTrailPositions(gunMuzzle.position, bulletHit.point);
+
+            bulletHit.collider.GetComponent<BasicEnemy>()?.TakeDamage(gunDamage);
         }
         else 
         { 
