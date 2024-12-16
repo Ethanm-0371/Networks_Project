@@ -16,6 +16,7 @@ public class GameServer : MonoBehaviour
 
     Dictionary<EndPoint, string> connectedUsers = new Dictionary<EndPoint, string>();
     public Dictionary<uint, NetInfo> netObjectsInfo = new Dictionary<uint, NetInfo>();
+    List<uint> objectsToDelete = new List<uint>();
 
     Queue<(PacketType, object, EndPoint)> functionsQueue = new Queue<(PacketType, object, EndPoint)>();
     Dictionary<PacketType, Action<object, EndPoint>> functionsDictionary;
@@ -51,13 +52,6 @@ public class GameServer : MonoBehaviour
             functionsDictionary[dequeuedFunction.Item1](dequeuedFunction.Item2, dequeuedFunction.Item3);
         }
 
-        //Debug manual instantiate zombie
-        if (Input.GetKeyDown(KeyCode.K))
-        {
-            int val = UnityEngine.Random.Range(0, 2);
-            AddNewNetObjectInfo(new Wrappers.BasicZombie(val));
-        }
-        //Debug manual send dictionary
         if (Input.GetKeyDown(KeyCode.N))
         {
             List<NetInfo> dictionaryList = GetNetInfoDictionaryList();
@@ -170,11 +164,17 @@ public class GameServer : MonoBehaviour
     {
         netObjectsInfo.Remove(netObjectID);
     }
+    public void MarkObjectToDelete(uint netObjectID)
+    {
+        objectsToDelete.Add(netObjectID);
+        RemoveNetObjectInfo(netObjectID);
+    }
     void UpdateNetObjsInfo()
     {
         foreach (var item in GetComponent<NetObjectsHandler>().netGameObjects)
         {
-            netObjectsInfo[item.Key] = item.Value.GetComponent<NetObject>().GetNetInfo();
+            if (netObjectsInfo.ContainsKey(item.Key))
+                netObjectsInfo[item.Key] = item.Value.GetComponent<NetObject>().GetNetInfo();
         }
     }
     List<NetInfo> GetNetInfoDictionaryList()
@@ -188,8 +188,18 @@ public class GameServer : MonoBehaviour
 
         foreach (var item in netObjectsInfo)
         {
+            if (objectsToDelete.Contains(item.Key)) { continue; }
+
             Vector3 targetPos = default;
             Quaternion targetRot = default;
+
+            if (item.Value is Wrappers.BasicZombie &&
+                !netObjDict.ContainsKey(item.Key))
+            {
+                var zombie = (Wrappers.BasicZombie)item.Value;
+
+                targetPos = GameObject.Find("LevelManager").GetComponent<EntityManager>().GetSpawner(zombie.isRoomZombie, zombie.spawnPoint).position;
+            }
 
             if (netObjDict.TryGetValue(item.Key, out var netObj))
             {
@@ -199,6 +209,12 @@ public class GameServer : MonoBehaviour
 
             objsInfo.Add(new Wrappers.NetObjInfo(item.Key, item.Value, targetPos, targetRot));
         }
+
+        foreach (var item in objectsToDelete)
+        {
+            objsInfo.Add(new Wrappers.ObjectToDestroy(item));
+        }
+        objectsToDelete.Clear();
 
         return objsInfo;
     }
@@ -228,21 +244,19 @@ public class GameServer : MonoBehaviour
 
         foreach (var item in GetComponent<NetObjectsHandler>().netGameObjects)
         {
-            if (currentSpawn < 4)
+            if (item.Value.GetComponent<PlayerBehaviour>() != null)
             {
                 item.Value.transform.position = transform.position = new Vector3(-3f + (currentSpawn * 2), 0, 0);
                 currentSpawn++;
                 continue;
             }
 
-            //Should destroy all other netGOs given that rn Scene is not
-            //being unloaded and NetObjsHandler does not destroy anything
-            //Destroy(item.Value);
+            MarkObjectToDelete(item.Key);
         }
 
         UpdateNetObjsInfo();
 
-        GameObject.Find("LevelManager").GetComponent<Level1Manager>().enabled = true;
+        GameObject.Find("LevelManager").GetComponent<Level1Manager>().enabled = false;
     }
 
     public uint GenerateRandomID()

@@ -16,6 +16,7 @@ namespace Wrappers
             Player,
             BasicZombie,
             SceneLoadedData,
+            ObjectToDestroy,
             NetObjInfo,
         }
 
@@ -28,6 +29,7 @@ namespace Wrappers
             {typeof(Player),                       ClassIdentifyers.Player},
             {typeof(BasicZombie),                  ClassIdentifyers.BasicZombie},
             {typeof(SceneLoadedData),              ClassIdentifyers.SceneLoadedData},
+            {typeof(ObjectToDestroy),              ClassIdentifyers.ObjectToDestroy},
             {typeof(NetObjInfo),                   ClassIdentifyers.NetObjInfo},
         };
         public static Dictionary<ClassIdentifyers, Type> decodeTypes = new Dictionary<ClassIdentifyers, Type>()
@@ -39,6 +41,7 @@ namespace Wrappers
             {ClassIdentifyers.Player,              typeof(Player)},
             {ClassIdentifyers.BasicZombie,         typeof(BasicZombie)},
             {ClassIdentifyers.SceneLoadedData,     typeof(SceneLoadedData)},
+            {ClassIdentifyers.ObjectToDestroy,     typeof(ObjectToDestroy)},
             {ClassIdentifyers.NetObjInfo,          typeof(NetObjInfo)},
         };
     }
@@ -350,18 +353,21 @@ namespace Wrappers
     {
         public BasicEnemy.State currentState;
         public int spawnPoint;
+        public bool isRoomZombie;
         public int currentHealth;
 
         public BasicZombie(BasicEnemy instance)
         {
             currentState = instance.currentState;
             spawnPoint = -1;
+            isRoomZombie = false;
             currentHealth = instance.currentHealth;
         }
-        public BasicZombie(int spawnRoom)
+        public BasicZombie(int spawnPoint, bool spawnsInRoom)
         {
             currentState = BasicEnemy.State.Idle;
-            spawnPoint = spawnRoom;
+            this.spawnPoint = spawnPoint;
+            isRoomZombie = spawnsInRoom;
             currentHealth = BasicEnemy.maxHealth;
         }
 
@@ -372,6 +378,7 @@ namespace Wrappers
 
             writer.Write((char)currentState);
             writer.Write((char)spawnPoint);
+            writer.Write(isRoomZombie);
             writer.Write(currentHealth);
 
             byte[] data = stream.ToArray();
@@ -389,6 +396,7 @@ namespace Wrappers
 
             currentState = (BasicEnemy.State)reader.ReadChar();
             spawnPoint = (int)reader.ReadChar();
+            isRoomZombie = reader.ReadBoolean();
             currentHealth = reader.ReadInt32();
 
             stream.Close();
@@ -426,6 +434,42 @@ namespace Wrappers
             BinaryReader reader = new BinaryReader(stream);
 
             placeHolder = reader.ReadInt32();
+
+            stream.Close();
+        }
+    }
+
+    [Serializable]
+    public struct ObjectToDestroy : NetInfo
+    {
+        public uint netID;
+
+        public ObjectToDestroy(uint netID)
+        {
+            this.netID = netID;
+        }
+
+        public byte[] Serialize()
+        {
+            MemoryStream stream = new MemoryStream();
+            BinaryWriter writer = new BinaryWriter(stream);
+
+            writer.Write(netID);
+
+            byte[] data = stream.ToArray();
+
+            stream.Close();
+            writer.Close();
+
+            return data;
+        }
+
+        public void Deserialize(byte[] data)
+        {
+            MemoryStream stream = new MemoryStream(data);
+            BinaryReader reader = new BinaryReader(stream);
+
+            netID = reader.ReadUInt32();
 
             stream.Close();
         }

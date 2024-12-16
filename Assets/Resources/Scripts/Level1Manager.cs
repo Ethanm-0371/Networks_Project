@@ -19,4 +19,14 @@ public class Level1Manager : MonoBehaviour
         });
         extractionZone.PlayerLeftZone.AddListener(() => { playersOnExtraction--; });
     }
+
+    private void OnEnable()
+    {
+        gameObject.AddComponent<EntityManager>();
+    }
+
+    private void OnDisable()
+    {
+        Destroy(GetComponent<EntityManager>());
+    }
 }

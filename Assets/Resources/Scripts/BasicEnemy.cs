@@ -16,8 +16,8 @@ public class BasicEnemy : NetObject
     List<GameObject> playerList = new List<GameObject>();
     GameObject targetPlayer;
 
-    [SerializeField] float detectionRadius = 10.0f;
     [SerializeField] float loseRadius = 15.0f;
+    [SerializeField] float detectionRadius = 10.0f;
     [SerializeField] float movementSpeed = 0.25f;
 
     public static int maxHealth = 100;
@@ -106,18 +106,23 @@ public class BasicEnemy : NetObject
         currentHealth = bzw.currentHealth;
     }
 
+    public void InitZombie(bool isRoomZombie, int spawnPoint)
+    {
+        if (isRoomZombie)
+        {
+            currentState = State.Chase;
+            loseRadius = 999f;
+            movementSpeed *= 1.5f;
+        }
+    }
+
     public void TakeDamage(int amount)
     {
         currentHealth -= amount;
 
         if (currentHealth <= 0)
         {
-            Destroy(gameObject);
+            GameServer.Singleton?.MarkObjectToDelete(netID);
         }
-    }
-
-    private void OnDestroy()
-    {
-        OnDestroyObject.Invoke();
     }
 }

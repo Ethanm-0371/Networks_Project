@@ -9,5 +9,4 @@ public abstract class NetObject : MonoBehaviour
 
     public abstract NetInfo GetNetInfo();
     public abstract void UpdateObject(NetInfo info);
-    public UnityEvent OnDestroyObject;
 }

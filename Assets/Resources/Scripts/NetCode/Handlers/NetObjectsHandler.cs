@@ -15,7 +15,25 @@ public class NetObjectsHandler : MonoBehaviour
 
     public void CheckNetObjects(List<NetInfo> receivedList)
     {
-        //Must add a way to read objects that need to be destroyed.
+        List<Wrappers.ObjectToDestroy> objectsToDestroy = new List<Wrappers.ObjectToDestroy>();
+        foreach (var item in receivedList)
+        {
+            if (item is Wrappers.ObjectToDestroy)
+            {
+                var obj = (Wrappers.ObjectToDestroy)item;
+
+                objectsToDestroy.Add(obj);
+            }
+        }
+
+        //Delete all marked objects
+        foreach (var item in objectsToDestroy)
+        {
+            Destroy(netGameObjects[item.netID]);
+            netGameObjects.Remove(item.netID);
+
+            receivedList.Remove(item);
+        }
 
         foreach (Wrappers.NetObjInfo entry in receivedList)
         {
@@ -40,11 +58,6 @@ public class NetObjectsHandler : MonoBehaviour
         newNetObj.GetComponent<NetObject>().netID = netID;
 
         netGameObjects.Add(netID, newNetObj);
-        newNetObj.GetComponent<NetObject>().OnDestroyObject.AddListener(() => 
-        { 
-            netGameObjects.Remove(netID);
-            GameServer.Singleton?.RemoveNetObjectInfo(netID);
-        });
 
         if (objectType == typeof(Wrappers.Player))
         {
@@ -54,9 +67,7 @@ public class NetObjectsHandler : MonoBehaviour
         {
             var castWrapper = (Wrappers.BasicZombie)objectToInstantiate;
 
-            GameObject[] spawnList = GameObject.FindGameObjectsWithTag("ZombieSpawnPoint");
-
-            newNetObj.transform.position = spawnList[castWrapper.spawnPoint].transform.position;
+            newNetObj.GetComponent<BasicEnemy>().InitZombie(castWrapper.isRoomZombie, castWrapper.spawnPoint);
         }
     }
 }
