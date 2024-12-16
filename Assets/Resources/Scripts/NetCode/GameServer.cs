@@ -22,6 +22,8 @@ public class GameServer : MonoBehaviour
     Dictionary<PacketType, Action<object, EndPoint>> functionsDictionary;
 
     bool gameStarted = false;
+    //float netObjsSendFrequency = 0.01f;
+    float netObjsSendFrequency = 2.0f;
 
     private void Awake()
     {
@@ -52,15 +54,6 @@ public class GameServer : MonoBehaviour
             functionsDictionary[dequeuedFunction.Item1](dequeuedFunction.Item2, dequeuedFunction.Item3);
         }
 
-        if (Input.GetKeyDown(KeyCode.N))
-        {
-            List<NetInfo> dictionaryList = GetNetInfoDictionaryList();
-
-            var clientEP = GameClient.Singleton.clientSocket.LocalEndPoint;
-            
-            BroadCastPacket(PacketType.netObjsDictionary, dictionaryList, clientEP);
-        }
-
         if (Input.GetKeyDown(KeyCode.B))
         {
             if (!gameStarted)
@@ -78,6 +71,8 @@ public class GameServer : MonoBehaviour
         //Start a new thread to receive messages.
         mainReceivingThread = new Thread(Receive);
         mainReceivingThread.Start();
+
+        StartCoroutine(SendDictionaryUpdates(netObjsSendFrequency));
     }
 
     void Receive()
@@ -278,6 +273,22 @@ public class GameServer : MonoBehaviour
     public int GetNumberOfPlayers()
     {
         return connectedUsers.Count;
+    }
+
+    IEnumerator SendDictionaryUpdates(float sendFrequency)
+    {
+        while (true)
+        {
+            if (GameClient.Singleton.clientSocket == null) { yield return null; }
+
+            List<NetInfo> dictionaryList = GetNetInfoDictionaryList();
+
+            var clientEP = GameClient.Singleton.clientSocket.LocalEndPoint;
+
+            BroadCastPacket(PacketType.netObjsDictionary, dictionaryList, clientEP);
+
+            yield return new WaitForSeconds(sendFrequency);
+        }
     }
 
     void HandleClientSceneLoaded(EndPoint ep)

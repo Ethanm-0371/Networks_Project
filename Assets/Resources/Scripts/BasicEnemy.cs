@@ -22,6 +22,7 @@ public class BasicEnemy : NetObject
 
     public static int maxHealth = 100;
     public int currentHealth;
+    bool isDead = false;
 
     private void Start()
     {
@@ -118,11 +119,14 @@ public class BasicEnemy : NetObject
 
     public void TakeDamage(int amount)
     {
-        currentHealth -= amount;
-
-        if (currentHealth <= 0)
+        if (currentHealth <= 0 && !isDead)
         {
+            isDead = true;
             GameServer.Singleton?.MarkObjectToDelete(netID);
+        }
+        else if(currentHealth > 0)
+        {
+            currentHealth -= amount;
         }
     }
 }
