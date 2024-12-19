@@ -2,7 +2,7 @@
 https://github.com/Ethanm-0371/Networks_Project
 
 # GitHub Release
-https://github.com/Ethanm-0371/Networks_Project/releases/tag/v.0.1
+https://github.com/Ethanm-0371/Networks_Project/releases/tag/v.0.2
 
 # List of Contributions
 
@@ -11,36 +11,21 @@ https://github.com/Ethanm-0371/Networks_Project/releases/tag/v.0.1
   
 All of the work was done using pair programming, where both of us collaborated at a single workstation. This ensured that we could work together seamlessly on the same .cs scripts without facing problems related to merging code. Merging changes in Unity can sometimes create more problems than it solves, so working this way helped us avoid such problems.
 
-What we can say is who originally came up with the ideas.
-
-For the things we done for the first delivery are the following (you can check the commits as well):
-
-- PacketHandler class, in charge of handling incoming and outgoing packets. Idea by Jonathan Cacay.
-
-- SceneHandler class, so that when the client has finished loading the static objects, would request the server for the dynamic objects. Idea by Ethan Martín.
-
-- NetObjectsHandler class, a script that handles the creation, update of the NetObjects. Idea by Jonathan Cacay.
-
-- Action-Based inputs, player behavior accepts keyboard inputs, but translates it into Actions. Idea by Ethan Martín.
-
-- Passive World State replication, users send their "Actions" and the server acknowledges it and broadcasts it back towards the other clients. Idea by Jonathan Cacay.
-
-- Wrappers namespace, a .cs script where all the Wrappers are located. Useful for sending stuff through the networks. Idea by Ethan Martín.
-
-- Game has a "GameClient" and a "GameServer". Normal clients have only GameClient while the host has GameClient and a GameServer. Idea by both.
-
-Overall, our goal was to establish the foundation of the game. At the moment, we are transmitting all the information, but in the future, we aim to optimize this by sending only specific variable changes.
+- Shooting behavior from the player where we used Raycast in order to implement it. Also implemented a way to avoid the camera clipping through the objects.
+- Zombie behavior using a behavior state machine (Idle & Chase). These zombies are killable and are managed through an EntityManager and spawned in ZombieSpawnPoint/ZombieSpawnRoom tagged empty GameObjects.
+- These behaviors also have a Wrapper of their own to send the data to the server.
+- An extraction zone (green area) that if all of the current players in the lobby are in, the level will be completed and everyone will return to the lobby.
 
 # Instructions
 - Make sure you create a server.
-- Then, other clients should put the local host IP (127.0.0.1)
+- Then, other clients should put the local host IP (127.0.0.1).
+- WASD for movement Input. LMB to shoot.
+- B to Start the game (only the host).
 
 # Main Scene to run in Unity
 Scenes/Main_Menu
 
 # Some difficulties
-We faced difficulties when trying to serialize a Dictionary, as both the key and value are needed to be included. The solution we found was to create a Serializable Wrapper class, "DictionaryEntryWrapper" which holds both the key and the value. Then, we created a list of DictionaryEntryWrapper objects, added all the dictionary entries to this list, and serialized the list. Then, deserialize back into a list with which we populate a dictionary on the receiving end.
 
-Another issue we encountered was the difference in input frequency. A client with higher FPS would send more inputs to the network which sometimes caused data loss. To address this temporarily, we capped everyone’s FPS at 60 and turned off VSync.
-
-Additionally, we faced a stuttering problem when updating positions across all clients. This was caused by a Coroutine that sent updates for all network objects every 0.2 seconds. As a temporary solution, we removed this delay to ensure smoother updates.
+- In the shooting mechanic we wanted to implement for a third-person view, we encountered an issue. Our goal was to have the bullet originate from the gun’s muzzle and travel toward the crosshair in the center of the screen. However, if the player stood next to a column and the crosshair aimed at another column behind the character, the bullet would end up shooting backward. This created a logical inconsistency and resulted in unrealistic behavior.
+- We encountered issues when trying to Destroy the GameObjects of the zombies. This led to a problem where, upon finishing a level, the zombies were not properly removed. Consequently, the client and server became unsynchronized, disrupting the correct functioning of the game.
