@@ -15,6 +15,7 @@ public class GameServer : MonoBehaviour
     Thread mainReceivingThread;
 
     Dictionary<EndPoint, string> connectedUsers = new Dictionary<EndPoint, string>();
+
     public Dictionary<uint, NetInfo> netObjectsInfo = new Dictionary<uint, NetInfo>();
     List<uint> objectsToDelete = new List<uint>();
 
@@ -22,7 +23,6 @@ public class GameServer : MonoBehaviour
     Dictionary<PacketType, Action<object, EndPoint>> functionsDictionary;
 
     bool gameStarted = false;
-    //float netObjsSendFrequency = 0.01f;
     float netObjsSendFrequency = 2.0f;
 
     private void Awake()
@@ -61,6 +61,16 @@ public class GameServer : MonoBehaviour
         }
     }
 
+    private void OnDestroy()
+    {
+        mainReceivingThread.Abort(); //Forces thread termination before cleaning sockets
+
+        serverSocket.Shutdown(SocketShutdown.Both); //Disables sending and receiving
+        serverSocket.Close(); //Closes the connection and frees all associated resources
+    }
+
+    #region Server Functions
+
     public void Init()
     {
         serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
@@ -74,7 +84,6 @@ public class GameServer : MonoBehaviour
 
         StartCoroutine(SendDictionaryUpdates(netObjsSendFrequency));
     }
-
     void Receive()
     {
         IPEndPoint sender = new IPEndPoint(IPAddress.Any, 0);
@@ -83,7 +92,7 @@ public class GameServer : MonoBehaviour
         byte[] data = new byte[1024];
         int recv;
 
-        while(true)
+        while (true)
         {
             recv = serverSocket.ReceiveFrom(data, ref Remote);
 
@@ -92,8 +101,8 @@ public class GameServer : MonoBehaviour
             (PacketType, object) decodedClass;
 
             //Data[1] defines if the packet contains a list
-            if (data[1] != 0) { decodedClass = PacketHandler.NewDecodeMultiPacket(data); }
-            else              { decodedClass = PacketHandler.NewDecodeSinglePacket(data); }
+            if (data[1] != 0) { decodedClass = PacketHandler.DecodeMultiPacket(data); }
+            else { decodedClass = PacketHandler.DecodeSinglePacket(data); }
 
             functionsQueue.Enqueue((decodedClass.Item1, decodedClass.Item2, Remote));
             //functionsDictionary[decodedClass.Item1](decodedClass.Item2, Remote);
@@ -115,24 +124,33 @@ public class GameServer : MonoBehaviour
     {
         foreach (var user in connectedUsers)
         {
-            if(user.Key.GetIP().ToString() == sender.GetIP().ToString() &&
+            if (user.Key.GetIP().ToString() == sender.GetIP().ToString() &&
                user.Key.GetPort() == sender.GetPort()) { continue; }
 
             IPEndPoint ipep = new IPEndPoint(user.Key.GetIP(), user.Key.GetPort());
             PacketHandler.SendPacket(serverSocket, ipep, type, infoList);
         }
     }
-    void BroadCastPacket(byte[] packetToSend, EndPoint sender)
-    {
-        foreach (var user in connectedUsers)
-        {
-            if (user.Key.GetIP().ToString() == sender.GetIP().ToString() &&
-               user.Key.GetPort() == sender.GetPort()) { continue; }
 
-            IPEndPoint ipep = new IPEndPoint(user.Key.GetIP(), user.Key.GetPort());
-            PacketHandler.SendPacket(serverSocket, ipep, packetToSend);
+    IEnumerator SendDictionaryUpdates(float sendFrequency)
+    {
+        while (true)
+        {
+            if (GameClient.Singleton.clientSocket == null) { yield return null; }
+
+            List<NetInfo> dictionaryList = GetNetInfoDictionaryList();
+
+            var clientEP = GameClient.Singleton.clientSocket.LocalEndPoint;
+
+            BroadCastPacket(PacketType.netObjsDictionary, dictionaryList, clientEP);
+
+            yield return new WaitForSeconds(sendFrequency);
         }
     }
+
+    #endregion
+
+    #region Handler Functions
 
     void StartServerFunctions()
     {
@@ -151,19 +169,86 @@ public class GameServer : MonoBehaviour
 
         connectedUsers.Add(ep, playerData.userName);
     }
+    void HandleClientSceneLoaded(EndPoint ep)
+    {
+        //Remove this from here when added feature to check for server with a ping
+        if (GetNumberOfPlayers() > 4) { return; }
+
+        AddNewNetObjectInfo(new Wrappers.Player(connectedUsers[ep]));
+
+        IPEndPoint ipep = new IPEndPoint(ep.GetIP(), ep.GetPort());
+
+        List<NetInfo> dictionaryToSend = GetNetInfoDictionaryList();
+        if (dictionaryToSend.Count <= 0) { return; }
+
+        PacketHandler.SendPacket(serverSocket, ipep, PacketType.netObjsDictionary, dictionaryToSend);
+        BroadCastPacket(PacketType.netObjsDictionary, dictionaryToSend, ipep);
+    }
+    void HandlePlayerActions(Wrappers.PlayerActionList actionsListContainer, EndPoint senderEP)
+    {
+        BroadCastPacket(PacketType.playerActionsList, actionsListContainer, senderEP);
+    }
+
+    #endregion
+
+    #region Game Functions
+
+    void StartGame()
+    {
+        gameStarted = true;
+
+        GameObject[] spawnList = GameObject.FindGameObjectsWithTag("PlayerSpawnPoint");
+        int currentSpawn = 0;
+
+        foreach (var item in GetComponent<NetObjectsHandler>().netGameObjects)
+        {
+            item.Value.transform.position = spawnList[currentSpawn].transform.position;
+            currentSpawn++;
+        }
+
+        UpdateNetObjsInfo();
+
+        GameObject.Find("LevelManager").GetComponent<Level1Manager>().enabled = true;
+    }
+    public void EndGame()
+    {
+        gameStarted = false;
+
+        int currentSpawn = 0;
+
+        foreach (var item in GetComponent<NetObjectsHandler>().netGameObjects)
+        {
+            if (item.Value.GetComponent<PlayerBehaviour>() != null)
+            {
+                item.Value.transform.position = transform.position = new Vector3(-3f + (currentSpawn * 2), 0, 0);
+                currentSpawn++;
+                continue;
+            }
+
+            MarkObjectToDelete(item.Key);
+        }
+
+        UpdateNetObjsInfo();
+
+        GameObject.Find("LevelManager").GetComponent<Level1Manager>().enabled = false;
+    }
+
+    #endregion
+
+    #region Helper Functions
+
+    //Object info dictionary functions
     public void AddNewNetObjectInfo(NetInfo objectToAdd)
     {
         netObjectsInfo.Add(GenerateRandomID(), objectToAdd);
     }
-    public void RemoveNetObjectInfo(uint netObjectID)
-    {
-        netObjectsInfo.Remove(netObjectID);
-    }
     public void MarkObjectToDelete(uint netObjectID)
     {
         objectsToDelete.Add(netObjectID);
-        RemoveNetObjectInfo(netObjectID);
+        netObjectsInfo.Remove(netObjectID);
     }
+
+    //Gather info functions
     void UpdateNetObjsInfo()
     {
         foreach (var item in GetComponent<NetObjectsHandler>().netGameObjects)
@@ -214,46 +299,7 @@ public class GameServer : MonoBehaviour
         return objsInfo;
     }
 
-    void StartGame()
-    {
-        gameStarted = true;
-
-        GameObject[] spawnList = GameObject.FindGameObjectsWithTag("PlayerSpawnPoint");
-        int currentSpawn = 0;
-
-        foreach (var item in GetComponent<NetObjectsHandler>().netGameObjects)
-        {
-            item.Value.transform.position = spawnList[currentSpawn].transform.position;
-            currentSpawn++;
-        }
-
-        UpdateNetObjsInfo();
-
-        GameObject.Find("LevelManager").GetComponent<Level1Manager>().enabled = true;
-    }
-    public void EndGame()
-    {
-        gameStarted = false;
-
-        int currentSpawn = 0;
-
-        foreach (var item in GetComponent<NetObjectsHandler>().netGameObjects)
-        {
-            if (item.Value.GetComponent<PlayerBehaviour>() != null)
-            {
-                item.Value.transform.position = transform.position = new Vector3(-3f + (currentSpawn * 2), 0, 0);
-                currentSpawn++;
-                continue;
-            }
-
-            MarkObjectToDelete(item.Key);
-        }
-
-        UpdateNetObjsInfo();
-
-        GameObject.Find("LevelManager").GetComponent<Level1Manager>().enabled = false;
-    }
-
+    //Other
     public uint GenerateRandomID()
     {
         byte[] buffer = new byte[4];
@@ -275,48 +321,5 @@ public class GameServer : MonoBehaviour
         return connectedUsers.Count;
     }
 
-    IEnumerator SendDictionaryUpdates(float sendFrequency)
-    {
-        while (true)
-        {
-            if (GameClient.Singleton.clientSocket == null) { yield return null; }
-
-            List<NetInfo> dictionaryList = GetNetInfoDictionaryList();
-
-            var clientEP = GameClient.Singleton.clientSocket.LocalEndPoint;
-
-            BroadCastPacket(PacketType.netObjsDictionary, dictionaryList, clientEP);
-
-            yield return new WaitForSeconds(sendFrequency);
-        }
-    }
-
-    void HandleClientSceneLoaded(EndPoint ep)
-    {
-        //Remove this from here when added feature to check for server with a ping
-        if (GetNumberOfPlayers() > 4) { return; }
-
-        AddNewNetObjectInfo(new Wrappers.Player(connectedUsers[ep]));
-
-        IPEndPoint ipep = new IPEndPoint(ep.GetIP(), ep.GetPort());
-
-        List<NetInfo> dictionaryToSend = GetNetInfoDictionaryList();
-        if (dictionaryToSend.Count <= 0) { return; }
-
-        PacketHandler.SendPacket(serverSocket, ipep, PacketType.netObjsDictionary, dictionaryToSend);
-        BroadCastPacket(PacketType.netObjsDictionary, dictionaryToSend, ipep);
-    }
-
-    void HandlePlayerActions(Wrappers.PlayerActionList actionsListContainer, EndPoint senderEP)
-    {
-        BroadCastPacket(PacketType.playerActionsList, actionsListContainer, senderEP);
-    }
-
-    private void OnDestroy()
-    {
-        mainReceivingThread.Abort(); //Forces thread termination before cleaning sockets
-
-        serverSocket.Shutdown(SocketShutdown.Both); //Disables sending and receiving
-        serverSocket.Close(); //Closes the connection and frees all associated resources
-    }
+    #endregion
 }

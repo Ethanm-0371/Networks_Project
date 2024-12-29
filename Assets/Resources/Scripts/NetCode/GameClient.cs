@@ -44,6 +44,7 @@ public class GameClient : MonoBehaviour
 
         netObjsHandler = gameObject.AddComponent<NetObjectsHandler>();
     }
+
     private void Update()
     {
         if (Input.GetKeyDown(KeyCode.Backspace))
@@ -58,6 +59,16 @@ public class GameClient : MonoBehaviour
             functionsDictionary[dequeuedFunction.Item1](dequeuedFunction.Item2);
         }
     }
+
+    private void OnDestroy()
+    {
+        mainReceivingThread.Abort(); //Forces thread termination before cleaning sockets
+
+        clientSocket.Shutdown(SocketShutdown.Both); //Disables sending and receiving
+        clientSocket.Close(); //Closes the connection and frees all associated resources
+    }
+
+    #region Client Functions
 
     public void Init(string ip, string username)
     {
@@ -90,34 +101,10 @@ public class GameClient : MonoBehaviour
             (PacketType, object) decodedClass;
 
             //Data[1] defines if the packet contains a list
-            if (data[1] != 0) { decodedClass = PacketHandler.NewDecodeMultiPacket(data); }
-            else              { decodedClass = PacketHandler.NewDecodeSinglePacket(data); }
+            if (data[1] != 0) { decodedClass = PacketHandler.DecodeMultiPacket(data); }
+            else { decodedClass = PacketHandler.DecodeSinglePacket(data); }
 
             functionsQueue.Enqueue(decodedClass);
-        }
-    }
-
-    void StartClientFunctions()
-    {
-        functionsDictionary = new Dictionary<PacketType, Action<object>>()
-        {
-            { PacketType.netObjsDictionary, obj => { HandleReceiveNetObjects((List<NetInfo>)obj); } },
-            { PacketType.playerActionsList, obj => { HandlePlayerActions((Wrappers.PlayerActionList)obj); } },
-        };
-    }
-
-    void HandleReceiveNetObjects(List<NetInfo> netObjectsInfo)
-    {
-        netObjsHandler.CheckNetObjects(netObjectsInfo);
-
-        ScenesHandler.Singleton.SetReady();
-    }
-
-    void HandlePlayerActions(Wrappers.PlayerActionList list)
-    {
-        foreach (var actions in list.l)
-        {
-            netObjsHandler.netGameObjects[list.id].GetComponent<PlayerBehaviour>().ExecuteActions(actions);
         }
     }
 
@@ -125,8 +112,8 @@ public class GameClient : MonoBehaviour
     {
         while (true)
         {
-            if (ownedPlayerGO == null) { yield return null; } 
-            else 
+            if (ownedPlayerGO == null) { yield return null; }
+            else
             {
                 var actionList = ownedPlayerGO.GetComponent<PlayerBehaviour>().GetActionsList();
                 //var playerBehaviour = ownedPlayerGO.GetComponent<PlayerBehaviour>();
@@ -144,11 +131,32 @@ public class GameClient : MonoBehaviour
         }
     }
 
-    private void OnDestroy()
-    {
-        mainReceivingThread.Abort(); //Forces thread termination before cleaning sockets
+    #endregion
 
-        clientSocket.Shutdown(SocketShutdown.Both); //Disables sending and receiving
-        clientSocket.Close(); //Closes the connection and frees all associated resources
+    #region HandlerFunctions
+
+    void StartClientFunctions()
+    {
+        functionsDictionary = new Dictionary<PacketType, Action<object>>()
+        {
+            { PacketType.netObjsDictionary, obj => { HandleReceiveNetObjects((List<NetInfo>)obj); } },
+            { PacketType.playerActionsList, obj => { HandlePlayerActions((Wrappers.PlayerActionList)obj); } },
+        };
     }
+
+    void HandleReceiveNetObjects(List<NetInfo> netObjectsInfo)
+    {
+        netObjsHandler.CheckNetObjects(netObjectsInfo);
+
+        ScenesHandler.Singleton.SetReady();
+    }
+    void HandlePlayerActions(Wrappers.PlayerActionList list)
+    {
+        foreach (var actions in list.l)
+        {
+            netObjsHandler.netGameObjects[list.id].GetComponent<PlayerBehaviour>().ExecuteActions(actions);
+        }
+    }
+
+    #endregion
 }

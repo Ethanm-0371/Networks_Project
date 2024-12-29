@@ -16,7 +16,7 @@ public enum PacketType
 
 public static class PacketHandler
 {
-    private static byte[] NewEncodePacket(PacketType type, NetInfo objectToAdd)
+    private static byte[] EncodePacket(PacketType type, NetInfo objectToAdd)
     {
         byte[] serializedClass = objectToAdd.Serialize();
 
@@ -29,7 +29,7 @@ public static class PacketHandler
 
         return result;
     }
-    private static byte[] NewEncodePacket(PacketType type, List<NetInfo> objectsToAdd)
+    private static byte[] EncodePacket(PacketType type, List<NetInfo> objectsToAdd)
     {
         List<byte[]> dataToAdd = new List<byte[]>();
         int totalDataSize = 0;
@@ -65,7 +65,7 @@ public static class PacketHandler
         return result;
     }
 
-    public static (PacketType, NetInfo) NewDecodeSinglePacket(byte[] packet)
+    public static (PacketType, NetInfo) DecodeSinglePacket(byte[] packet)
     {
         PacketType type = (PacketType)packet[0];
 
@@ -79,7 +79,7 @@ public static class PacketHandler
 
         return (type, decodedClass);
     }
-    public static (PacketType, List<NetInfo>) NewDecodeMultiPacket(byte[] packet)
+    public static (PacketType, List<NetInfo>) DecodeMultiPacket(byte[] packet)
     {
         List<NetInfo> returnList = new List<NetInfo>();
 
@@ -111,16 +111,12 @@ public static class PacketHandler
 
     public static void SendPacket(Socket senderSocket, IPEndPoint targetEndPoint, PacketType type, NetInfo infoToSend)
     {
-        byte[] data = NewEncodePacket(type, infoToSend);
+        byte[] data = EncodePacket(type, infoToSend);
         senderSocket.SendTo(data, data.Length, SocketFlags.None, targetEndPoint);
     }
     public static void SendPacket(Socket senderSocket, IPEndPoint targetEndPoint, PacketType type, List<NetInfo> infoToSend)
     {
-        byte[] data = NewEncodePacket(type, infoToSend);
-        senderSocket.SendTo(data, data.Length, SocketFlags.None, targetEndPoint);
-    }
-    public static void SendPacket(Socket senderSocket, IPEndPoint targetEndPoint, byte[] data)
-    {
+        byte[] data = EncodePacket(type, infoToSend);
         senderSocket.SendTo(data, data.Length, SocketFlags.None, targetEndPoint);
     }
 }
