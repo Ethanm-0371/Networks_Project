@@ -10,6 +10,7 @@ namespace Wrappers
         public enum ClassIdentifyers
         {
             None,
+            PingData,
             UserData,
             PlayerActions,
             PlayerActionsList,
@@ -23,8 +24,9 @@ namespace Wrappers
         public static Dictionary<Type, ClassIdentifyers> encodeTypes = new Dictionary<Type, ClassIdentifyers>()
         {
             {typeof(object),                       ClassIdentifyers.None}, // Acts as the "null" equivalent
+            {typeof(PingData),                     ClassIdentifyers.PingData},
             {typeof(UserData),                     ClassIdentifyers.UserData},
-            {typeof(ActionsInFrame),                ClassIdentifyers.PlayerActions},
+            {typeof(ActionsInFrame),               ClassIdentifyers.PlayerActions},
             {typeof(PlayerActionList),             ClassIdentifyers.PlayerActionsList},
             {typeof(Player),                       ClassIdentifyers.Player},
             {typeof(BasicZombie),                  ClassIdentifyers.BasicZombie},
@@ -35,6 +37,7 @@ namespace Wrappers
         public static Dictionary<ClassIdentifyers, Type> decodeTypes = new Dictionary<ClassIdentifyers, Type>()
         {
             {ClassIdentifyers.None,                typeof(object)}, // Acts as the "null" equivalent
+            {ClassIdentifyers.PingData,            typeof(PingData)},
             {ClassIdentifyers.UserData,            typeof(UserData)},
             {ClassIdentifyers.PlayerActions,       typeof(ActionsInFrame)},
             {ClassIdentifyers.PlayerActionsList,   typeof(PlayerActionList)},
@@ -410,6 +413,42 @@ namespace Wrappers
         int placeHolder;
 
         public SceneLoadedData(int value)
+        {
+            placeHolder = value;
+        }
+
+        public byte[] Serialize()
+        {
+            MemoryStream stream = new MemoryStream();
+            BinaryWriter writer = new BinaryWriter(stream);
+
+            writer.Write(placeHolder);
+
+            byte[] data = stream.ToArray();
+
+            stream.Close();
+            writer.Close();
+
+            return data;
+        }
+        public void Deserialize(byte[] data)
+        {
+            MemoryStream stream = new MemoryStream(data);
+            BinaryReader reader = new BinaryReader(stream);
+
+            placeHolder = reader.ReadInt32();
+
+            stream.Close();
+        }
+    }
+
+    [Serializable]
+    public struct PingData : NetInfo
+    {
+        //This variable is completely unnecessary
+        int placeHolder;
+
+        public PingData(int value)
         {
             placeHolder = value;
         }

@@ -156,24 +156,33 @@ public class GameServer : MonoBehaviour
     {
         functionsDictionary = new Dictionary<PacketType, Action<object, EndPoint>>()
         {
+            { PacketType.Ping, (obj, ep) => { HandlePing(ep); } },
             { PacketType.PlayerData, (obj, ep) => { AddUserToDictionary(ep, (Wrappers.UserData)obj); } },
             { PacketType.SceneLoadedFlag, (obj, ep) => { HandleClientSceneLoaded(ep); } },
             { PacketType.playerActionsList, (obj, ep) => { HandlePlayerActions((Wrappers.PlayerActionList)obj, ep); } },
         };
     }
 
+    void HandlePing(EndPoint ep)                                
+    {                                               
+        if (GetNumberOfPlayers() > 4) { 
+            return; // Should timeout the player. Maybe change it to something better.
+        }
+        else
+        {
+            IPEndPoint ipep = new IPEndPoint(ep.GetIP(), ep.GetPort());
+            // Send ping back to client
+            PacketHandler.SendPacket(serverSocket, ipep, PacketType.Ping, new Wrappers.PingData(0));
+        }
+
+    }
+
     void AddUserToDictionary(EndPoint ep, Wrappers.UserData playerData)
     {
-        //Remove this from here when added feature to check for server with a ping
-        if (GetNumberOfPlayers() > 4) { return; }
-
         connectedUsers.Add(ep, playerData.userName);
     }
     void HandleClientSceneLoaded(EndPoint ep)
     {
-        //Remove this from here when added feature to check for server with a ping
-        if (GetNumberOfPlayers() > 4) { return; }
-
         AddNewNetObjectInfo(new Wrappers.Player(connectedUsers[ep]));
 
         IPEndPoint ipep = new IPEndPoint(ep.GetIP(), ep.GetPort());

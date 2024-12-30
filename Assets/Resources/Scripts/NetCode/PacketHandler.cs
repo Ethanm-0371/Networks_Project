@@ -7,6 +7,7 @@ using UnityEngine;
 public enum PacketType
 {
     None,
+    Ping,
     PlayerData,
     AssignOwnership,
     SceneLoadedFlag,

@@ -18,6 +18,11 @@ public class GameClient : MonoBehaviour
     public GameObject ownedPlayerGO = null;
     float playerActionsSendFrequency = 0.2f;
 
+    // Ping variables
+    Coroutine pingCoroutine;
+    bool pingReceived = false;
+    float timeoutDuration = 30.0f; // For debugging, change to 1.0f, default 30.0f
+
     Queue<(PacketType, object)> functionsQueue = new Queue<(PacketType, object)>();
     Dictionary<PacketType, Action<object>> functionsDictionary;
 
@@ -47,6 +52,7 @@ public class GameClient : MonoBehaviour
 
     private void Update()
     {
+        
         if (Input.GetKeyDown(KeyCode.Backspace))
         {
             ScenesHandler.Singleton.LoadScene("Main_Menu", UnityEngine.SceneManagement.LoadSceneMode.Single);
@@ -64,8 +70,12 @@ public class GameClient : MonoBehaviour
     {
         mainReceivingThread.Abort(); //Forces thread termination before cleaning sockets
 
+        if (pingCoroutine != null) 
+            StopCoroutine(pingCoroutine);
+
         clientSocket.Shutdown(SocketShutdown.Both); //Disables sending and receiving
         clientSocket.Close(); //Closes the connection and frees all associated resources
+        pingReceived = false;
     }
 
     #region Client Functions
@@ -74,6 +84,9 @@ public class GameClient : MonoBehaviour
     {
         clientSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
         serverEndPoint = new IPEndPoint(IPAddress.Parse(ip), 9050); //Change port to another inputfield
+
+        // Send ping
+        pingCoroutine = StartCoroutine(PingServer(timeoutDuration));
 
         //Handshake
         PacketHandler.SendPacket(clientSocket, serverEndPoint, PacketType.PlayerData, new Wrappers.UserData(username));
@@ -93,7 +106,7 @@ public class GameClient : MonoBehaviour
         int recv;
 
         while (true)
-        {
+        {   
             recv = clientSocket.ReceiveFrom(data, ref Remote);
 
             if (recv == 0) { continue; }
@@ -105,6 +118,24 @@ public class GameClient : MonoBehaviour
             else { decodedClass = PacketHandler.DecodeSinglePacket(data); }
 
             functionsQueue.Enqueue(decodedClass);
+        }
+    }
+
+    IEnumerator PingServer(float timeoutDuration)
+    {
+        while (true)
+        {
+            Debug.Log("Sent ping");
+            PacketHandler.SendPacket(clientSocket, serverEndPoint, PacketType.Ping, new Wrappers.PingData(0));
+
+            yield return new WaitForSeconds(timeoutDuration);
+
+            if (!pingReceived)
+            {
+                Debug.Log("Ping not received from server. Destroying now...");
+                OnDestroy();
+                break;
+            }
         }
     }
 
@@ -139,9 +170,16 @@ public class GameClient : MonoBehaviour
     {
         functionsDictionary = new Dictionary<PacketType, Action<object>>()
         {
+            { PacketType.Ping, obj => { HandlePing(); } },
             { PacketType.netObjsDictionary, obj => { HandleReceiveNetObjects((List<NetInfo>)obj); } },
             { PacketType.playerActionsList, obj => { HandlePlayerActions((Wrappers.PlayerActionList)obj); } },
         };
+    }
+
+    void HandlePing() 
+    {
+        Debug.Log("Ping received from server.");
+        pingReceived = true;
     }
 
     void HandleReceiveNetObjects(List<NetInfo> netObjectsInfo)
@@ -157,6 +195,6 @@ public class GameClient : MonoBehaviour
             netObjsHandler.netGameObjects[list.id].GetComponent<PlayerBehaviour>().ExecuteActions(actions);
         }
     }
-
+    
     #endregion
 }
