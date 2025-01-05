@@ -13,6 +13,14 @@ public class NetObjectsHandler : MonoBehaviour
 
     public Dictionary<uint, GameObject> netGameObjects = new Dictionary<uint, GameObject>();
 
+    GameObject[] playerSpawnPoints = new GameObject[4];
+    int spawnedPlayers = 0;
+
+    private void Awake()
+    {
+        UnityEngine.SceneManagement.SceneManager.sceneLoaded += (_, _) => { playerSpawnPoints = GameObject.FindGameObjectsWithTag("PlayerSpawnPoint"); };
+    }
+
     public void CheckNetObjects(List<NetInfo> receivedList)
     {
         List<Wrappers.ObjectToDestroy> objectsToDestroy = new List<Wrappers.ObjectToDestroy>();
@@ -61,6 +69,9 @@ public class NetObjectsHandler : MonoBehaviour
 
         if (objectType == typeof(Wrappers.Player))
         {
+            newNetObj.transform.position = playerSpawnPoints[spawnedPlayers % 4].transform.position;
+            spawnedPlayers++;
+
             newNetObj.GetComponent<PlayerBehaviour>().InitPlayer((Wrappers.Player)objectToInstantiate);
         }
         if (objectType == typeof(Wrappers.BasicZombie))

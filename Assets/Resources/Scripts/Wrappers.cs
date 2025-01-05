@@ -16,6 +16,7 @@ namespace Wrappers
             PlayerActionsList,
             Player,
             BasicZombie,
+            ChangeSceneCommand,
             SceneLoadedData,
             ObjectToDestroy,
             NetObjInfo,
@@ -30,6 +31,7 @@ namespace Wrappers
             {typeof(PlayerActionList),             ClassIdentifyers.PlayerActionsList},
             {typeof(Player),                       ClassIdentifyers.Player},
             {typeof(BasicZombie),                  ClassIdentifyers.BasicZombie},
+            {typeof(ChangeSceneCommand),           ClassIdentifyers.ChangeSceneCommand},
             {typeof(SceneLoadedData),              ClassIdentifyers.SceneLoadedData},
             {typeof(ObjectToDestroy),              ClassIdentifyers.ObjectToDestroy},
             {typeof(NetObjInfo),                   ClassIdentifyers.NetObjInfo},
@@ -43,6 +45,7 @@ namespace Wrappers
             {ClassIdentifyers.PlayerActionsList,   typeof(PlayerActionList)},
             {ClassIdentifyers.Player,              typeof(Player)},
             {ClassIdentifyers.BasicZombie,         typeof(BasicZombie)},
+            {ClassIdentifyers.ChangeSceneCommand,  typeof(ChangeSceneCommand)},
             {ClassIdentifyers.SceneLoadedData,     typeof(SceneLoadedData)},
             {ClassIdentifyers.ObjectToDestroy,     typeof(ObjectToDestroy)},
             {ClassIdentifyers.NetObjInfo,          typeof(NetObjInfo)},
@@ -401,6 +404,41 @@ namespace Wrappers
             spawnPoint = (int)reader.ReadChar();
             isRoomZombie = reader.ReadBoolean();
             currentHealth = reader.ReadInt32();
+
+            stream.Close();
+        }
+    }
+
+    [Serializable]
+    public struct ChangeSceneCommand : NetInfo
+    {
+        public string targetSceneName;
+
+        public ChangeSceneCommand(string sceneName)
+        {
+            targetSceneName = sceneName;
+        }
+
+        public byte[] Serialize()
+        {
+            MemoryStream stream = new MemoryStream();
+            BinaryWriter writer = new BinaryWriter(stream);
+
+            writer.Write(targetSceneName);
+
+            byte[] data = stream.ToArray();
+
+            stream.Close();
+            writer.Close();
+
+            return data;
+        }
+        public void Deserialize(byte[] data)
+        {
+            MemoryStream stream = new MemoryStream(data);
+            BinaryReader reader = new BinaryReader(stream);
+
+            targetSceneName = reader.ReadString();
 
             stream.Close();
         }

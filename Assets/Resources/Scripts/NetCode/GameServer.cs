@@ -59,6 +59,11 @@ public class GameServer : MonoBehaviour
             if (!gameStarted)
                 StartGame();
         }
+        if (Input.GetKeyDown(KeyCode.N))
+        {
+            if (gameStarted)
+                EndGame();
+        }
     }
 
     private void OnDestroy()
@@ -113,8 +118,9 @@ public class GameServer : MonoBehaviour
     {
         foreach (var user in connectedUsers)
         {
-            if (user.Key.GetIP().ToString() == sender.GetIP().ToString() &&
-               user.Key.GetPort() == sender.GetPort()) { continue; }
+            if (sender != null &&
+                user.Key.GetIP().ToString() == sender.GetIP().ToString() &&
+                user.Key.GetPort() == sender.GetPort()) { continue; }
 
             IPEndPoint ipep = new IPEndPoint(user.Key.GetIP(), user.Key.GetPort());
             PacketHandler.SendPacket(serverSocket, ipep, type, objectToSend);
@@ -206,40 +212,21 @@ public class GameServer : MonoBehaviour
     {
         gameStarted = true;
 
-        GameObject[] spawnList = GameObject.FindGameObjectsWithTag("PlayerSpawnPoint");
-        int currentSpawn = 0;
+        netObjectsInfo.Clear();
 
-        foreach (var item in GetComponent<NetObjectsHandler>().netGameObjects)
-        {
-            item.Value.transform.position = spawnList[currentSpawn].transform.position;
-            currentSpawn++;
-        }
+        //Send order to change scene
+        BroadCastPacket(PacketType.ChangeSceneCommand, new Wrappers.ChangeSceneCommand("Level_1"), null);
 
-        UpdateNetObjsInfo();
-
-        GameObject.Find("LevelManager").GetComponent<Level1Manager>().enabled = true;
+        //GameObject.Find("LevelManager").GetComponent<Level1Manager>().enabled = true;
     }
     public void EndGame()
     {
         gameStarted = false;
 
-        int currentSpawn = 0;
+        netObjectsInfo.Clear();
 
-        foreach (var item in GetComponent<NetObjectsHandler>().netGameObjects)
-        {
-            if (item.Value.GetComponent<PlayerBehaviour>() != null)
-            {
-                item.Value.transform.position = transform.position = new Vector3(-3f + (currentSpawn * 2), 0, 0);
-                currentSpawn++;
-                continue;
-            }
-
-            MarkObjectToDelete(item.Key);
-        }
-
-        UpdateNetObjsInfo();
-
-        GameObject.Find("LevelManager").GetComponent<Level1Manager>().enabled = false;
+        //Send order to change scene
+        BroadCastPacket(PacketType.ChangeSceneCommand, new Wrappers.ChangeSceneCommand("Lobby"), null);
     }
 
     #endregion

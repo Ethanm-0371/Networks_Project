@@ -10,6 +10,7 @@ public enum PacketType
     Ping,
     PlayerData,
     AssignOwnership,
+    ChangeSceneCommand,
     SceneLoadedFlag,
     netObjsDictionary,
     playerActionsList,

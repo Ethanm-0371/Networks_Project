@@ -171,6 +171,7 @@ public class GameClient : MonoBehaviour
         functionsDictionary = new Dictionary<PacketType, Action<object>>()
         {
             { PacketType.Ping, obj => { HandlePing(); } },
+            { PacketType.ChangeSceneCommand, obj => { HandleSceneChange((Wrappers.ChangeSceneCommand)obj); } },
             { PacketType.netObjsDictionary, obj => { HandleReceiveNetObjects((List<NetInfo>)obj); } },
             { PacketType.playerActionsList, obj => { HandlePlayerActions((Wrappers.PlayerActionList)obj); } },
         };
@@ -182,6 +183,11 @@ public class GameClient : MonoBehaviour
         pingReceived = true;
     }
 
+    void HandleSceneChange(Wrappers.ChangeSceneCommand command)
+    {
+        netObjsHandler.netGameObjects.Clear();
+        ScenesHandler.Singleton.LoadScene(command.targetSceneName, UnityEngine.SceneManagement.LoadSceneMode.Single);
+    }
     void HandleReceiveNetObjects(List<NetInfo> netObjectsInfo)
     {
         netObjsHandler.CheckNetObjects(netObjectsInfo);
