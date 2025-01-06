@@ -216,8 +216,6 @@ public class GameServer : MonoBehaviour
 
         //Send order to change scene
         BroadCastPacket(PacketType.ChangeSceneCommand, new Wrappers.ChangeSceneCommand("Level_1"), null);
-
-        //GameObject.Find("LevelManager").GetComponent<Level1Manager>().enabled = true;
     }
     public void EndGame()
     {
@@ -315,6 +313,19 @@ public class GameServer : MonoBehaviour
     public int GetNumberOfPlayers()
     {
         return connectedUsers.Count;
+    }
+    public void SetLevelStatus(bool isPlaying)
+    {
+        //This could be improved
+
+        if (isPlaying)
+        {
+            GameObject.Find("LevelManager").GetComponent<Level1Manager>().enabled = true;
+        }
+        else
+        {
+            GameObject.Find("LevelManager").GetComponent<Level1Manager>().enabled = false;
+        }
     }
 
     #endregion

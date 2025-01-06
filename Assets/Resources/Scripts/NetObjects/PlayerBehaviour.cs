@@ -62,6 +62,10 @@ public class PlayerBehaviour : NetObject
         {
             actionsInFrame.Add(new PlayerAction(PlayerAction.ActionType.MoveR));
         }
+        if (Input.GetKeyDown(KeyCode.E))
+        {
+            if (FindDoor()) actionsInFrame.Add(new PlayerAction(PlayerAction.ActionType.OpenDoor));
+        }
 
         float mouseX = Input.GetAxis("Mouse X");
         float mouseY = Input.GetAxis("Mouse Y");
@@ -105,6 +109,9 @@ public class PlayerBehaviour : NetObject
                     break;
                 case PlayerAction.ActionType.Shot:
                     ShootCurrentGun(action);
+                    break;
+                case PlayerAction.ActionType.OpenDoor:
+                    OpenDoor();
                     break;
                 case PlayerAction.ActionType.None:
                 default:
@@ -155,6 +162,10 @@ public class PlayerBehaviour : NetObject
         Vector3 direction = new Vector3(float.Parse(shotAction.parameters[3]), float.Parse(shotAction.parameters[4]), float.Parse(shotAction.parameters[5]));
 
         currentGun.Shoot(origin, direction);
+    }
+    void OpenDoor()
+    {
+        GameObject.Find("SafeRoomDoor").GetComponentInChildren<SafeRoomDoor>()?.Open(transform.position); //This hurts a lot, please find a better way.
     }
 
     public PlayerActionList? GetActionsList()
@@ -232,5 +243,22 @@ public class PlayerBehaviour : NetObject
     public void AttachCamera()
     {
         Camera.main.gameObject.GetComponent<PlayerCamera>().SetParent(camPivot);
+    }
+
+    bool FindDoor()
+    {
+        Vector2 screenCenter = new Vector2(Screen.width / 2, Screen.height / 2);
+        Ray ray = Camera.main.ScreenPointToRay(screenCenter);
+
+        if (Physics.Raycast(ray, out RaycastHit reticleTarget, 5f))
+        {
+            Debug.Log($"Hit: {reticleTarget.collider.gameObject.name}");
+
+            if (reticleTarget.collider.GetComponent<SafeRoomDoor>())
+            {
+                return true;
+            }
+        }
+        return false;
     }
 }

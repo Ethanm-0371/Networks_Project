@@ -99,6 +99,7 @@ namespace Wrappers
             MoveR,
             Rotate,
             Shot,
+            OpenDoor,
         }
 
         public ActionType actionType;
