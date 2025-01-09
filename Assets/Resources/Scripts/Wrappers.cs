@@ -12,6 +12,7 @@ namespace Wrappers
             None,
             PingData,
             UserData,
+            Disconnect,
             PlayerActions,
             PlayerActionsList,
             Player,
@@ -27,6 +28,7 @@ namespace Wrappers
             {typeof(object),                       ClassIdentifyers.None}, // Acts as the "null" equivalent
             {typeof(PingData),                     ClassIdentifyers.PingData},
             {typeof(UserData),                     ClassIdentifyers.UserData},
+            {typeof(Disconnect),                   ClassIdentifyers.Disconnect},
             {typeof(ActionsInFrame),               ClassIdentifyers.PlayerActions},
             {typeof(PlayerActionList),             ClassIdentifyers.PlayerActionsList},
             {typeof(Player),                       ClassIdentifyers.Player},
@@ -41,6 +43,7 @@ namespace Wrappers
             {ClassIdentifyers.None,                typeof(object)}, // Acts as the "null" equivalent
             {ClassIdentifyers.PingData,            typeof(PingData)},
             {ClassIdentifyers.UserData,            typeof(UserData)},
+            {ClassIdentifyers.Disconnect,          typeof(Disconnect)},
             {ClassIdentifyers.PlayerActions,       typeof(ActionsInFrame)},
             {ClassIdentifyers.PlayerActionsList,   typeof(PlayerActionList)},
             {ClassIdentifyers.Player,              typeof(Player)},
@@ -488,6 +491,42 @@ namespace Wrappers
         int placeHolder;
 
         public PingData(int value)
+        {
+            placeHolder = value;
+        }
+
+        public byte[] Serialize()
+        {
+            MemoryStream stream = new MemoryStream();
+            BinaryWriter writer = new BinaryWriter(stream);
+
+            writer.Write(placeHolder);
+
+            byte[] data = stream.ToArray();
+
+            stream.Close();
+            writer.Close();
+
+            return data;
+        }
+        public void Deserialize(byte[] data)
+        {
+            MemoryStream stream = new MemoryStream(data);
+            BinaryReader reader = new BinaryReader(stream);
+
+            placeHolder = reader.ReadInt32();
+
+            stream.Close();
+        }
+    }
+
+    [Serializable]
+    public struct Disconnect : NetInfo
+    {
+        //This variable is completely unnecessary
+        int placeHolder;
+
+        public Disconnect(int value)
         {
             placeHolder = value;
         }

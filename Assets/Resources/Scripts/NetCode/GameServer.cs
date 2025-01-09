@@ -68,6 +68,7 @@ public class GameServer : MonoBehaviour
 
     private void OnDestroy()
     {
+        BroadCastPacket(PacketType.Disconnect, new Wrappers.Disconnect(0), null);
         mainReceivingThread.Abort(); //Forces thread termination before cleaning sockets
 
         serverSocket.Shutdown(SocketShutdown.Both); //Disables sending and receiving
@@ -99,9 +100,15 @@ public class GameServer : MonoBehaviour
 
         while (true)
         {
-            recv = serverSocket.ReceiveFrom(data, ref Remote);
-
-            if (recv == 0) { continue; }
+            try
+            {
+                recv = serverSocket.ReceiveFrom(data, ref Remote);
+                if (recv == 0) { continue; }
+            }
+            catch (SocketException ex) 
+            {
+                Debug.LogWarning("SocketException error (GameServer Receive()): " + ex.Message);
+            }
 
             (PacketType, object) decodedClass;
 
@@ -163,15 +170,30 @@ public class GameServer : MonoBehaviour
         functionsDictionary = new Dictionary<PacketType, Action<object, EndPoint>>()
         {
             { PacketType.Ping, (obj, ep) => { HandlePing(ep); } },
+            { PacketType.Disconnect, (obj, ep) => { HandleDisconnect(ep); } },
             { PacketType.PlayerData, (obj, ep) => { AddUserToDictionary(ep, (Wrappers.UserData)obj); } },
             { PacketType.SceneLoadedFlag, (obj, ep) => { HandleClientSceneLoaded(ep); } },
             { PacketType.playerActionsList, (obj, ep) => { HandlePlayerActions((Wrappers.PlayerActionList)obj, ep); } },
         };
     }
 
-    void HandlePing(EndPoint ep)                                
-    {                                               
-        if (GetNumberOfPlayers() > 4) { 
+    void HandleDisconnect(EndPoint ep)
+    {
+        PlayerBehaviour[] players = FindObjectsByType<PlayerBehaviour>(FindObjectsSortMode.None);
+        foreach (PlayerBehaviour player in players)
+        {
+            if (player.ownerName != connectedUsers[ep]) { continue; }
+
+            MarkObjectToDelete(player.netID);
+            connectedUsers.Remove(ep);
+            return;
+        }
+    }
+
+    void HandlePing(EndPoint ep)
+    {
+        if (GetNumberOfPlayers() > 4)
+        {
             return; // Should timeout the player. Maybe change it to something better.
         }
         else

@@ -9,6 +9,7 @@ public enum PacketType
     None,
     Ping,
     PlayerData,
+    Disconnect,
     AssignOwnership,
     ChangeSceneCommand,
     SceneLoadedFlag,

@@ -79,6 +79,8 @@ public class GameClient : MonoBehaviour
 
         Cursor.lockState = CursorLockMode.None;
 
+        PacketHandler.SendPacket(clientSocket, serverEndPoint, PacketType.Disconnect, new Wrappers.Disconnect(0));
+
         clientSocket.Shutdown(SocketShutdown.Both); //Disables sending and receiving
         clientSocket.Close(); //Closes the connection and frees all associated resources
         pingReceived = false;
@@ -120,8 +122,7 @@ public class GameClient : MonoBehaviour
             }
             catch (SocketException msg)
             {
-                Debug.LogWarning("SocketException error: " + msg.Message);
-                break;
+                Debug.LogWarning("SocketException error (GameClient Receive()): " + msg.Message);
             }
 
             (PacketType, object) decodedClass;
@@ -147,9 +148,7 @@ public class GameClient : MonoBehaviour
             if (!pingReceived)
             {
                 Debug.Log("Ping not received from server. Destroying now...");
-                Destroy(this.gameObject);
-
-                ScenesHandler.Singleton.LoadScene("Main_Menu", UnityEngine.SceneManagement.LoadSceneMode.Single);
+                HandleDisconnect();
                 break;
             }
         }
@@ -187,10 +186,18 @@ public class GameClient : MonoBehaviour
         functionsDictionary = new Dictionary<PacketType, Action<object>>()
         {
             { PacketType.Ping, obj => { HandlePing(); } },
+            { PacketType.Disconnect, obj => { HandleDisconnect(); } },
             { PacketType.ChangeSceneCommand, obj => { HandleSceneChange((Wrappers.ChangeSceneCommand)obj); } },
             { PacketType.netObjsDictionary, obj => { HandleReceiveNetObjects((List<NetInfo>)obj); } },
             { PacketType.playerActionsList, obj => { HandlePlayerActions((Wrappers.PlayerActionList)obj); } },
         };
+    }
+
+    private void HandleDisconnect()
+    {
+        Destroy(this.gameObject);
+
+        ScenesHandler.Singleton.LoadScene("Main_Menu", UnityEngine.SceneManagement.LoadSceneMode.Single);
     }
 
     void HandlePing()
