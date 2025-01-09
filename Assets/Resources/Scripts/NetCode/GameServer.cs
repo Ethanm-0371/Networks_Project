@@ -215,7 +215,7 @@ public class GameServer : MonoBehaviour
         netObjectsInfo.Clear();
 
         //Send order to change scene
-        BroadCastPacket(PacketType.ChangeSceneCommand, new Wrappers.ChangeSceneCommand("Level_1"), null);
+        BroadCastPacket(PacketType.ChangeSceneCommand, new Wrappers.ChangeSceneCommand("Level_2"), null);
     }
     public void EndGame()
     {
