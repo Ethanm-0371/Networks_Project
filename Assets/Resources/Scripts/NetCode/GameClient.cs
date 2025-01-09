@@ -22,7 +22,7 @@ public class GameClient : MonoBehaviour
     // Ping variables
     Coroutine pingCoroutine;
     bool pingReceived = false;
-    const float timeoutDuration = 3.0f; // For debugging, change to 1.0f, default 10.0f
+    const float timeoutDuration = 10.0f; // For debugging, change to 3.0f, default 10.0f
 
     Queue<(PacketType, object)> functionsQueue = new Queue<(PacketType, object)>();
     Dictionary<PacketType, Action<object>> functionsDictionary;
