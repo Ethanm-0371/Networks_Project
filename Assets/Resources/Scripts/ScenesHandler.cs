@@ -48,7 +48,14 @@ public class ScenesHandler : MonoBehaviour
 
         SceneManager.LoadSceneAsync(sceneName, loadMode).completed += (AsyncOperation func) =>
         {
-            PacketHandler.SendPacket(GameClient.Singleton.clientSocket, GameClient.Singleton.serverEndPoint, PacketType.SceneLoadedFlag, new Wrappers.SceneLoadedData(1));
+            if (GameClient.Singleton != null)
+            {
+                PacketHandler.SendPacket(GameClient.Singleton.clientSocket, GameClient.Singleton.serverEndPoint, PacketType.SceneLoadedFlag, new Wrappers.SceneLoadedData(1));
+            }
+            else
+            {
+                Debug.LogWarning("Could not load scenes because Client not instantiated.");
+            }
         };
     }
 

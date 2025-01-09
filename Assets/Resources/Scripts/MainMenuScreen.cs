@@ -20,6 +20,8 @@ public class MainMenuScreen : MonoBehaviour
         //A better solution to this has to be found.
         Application.targetFrameRate = 60;
         QualitySettings.vSyncCount = 0;
+
+        ScenesHandler.Singleton?.SetReady();
     }
 
     public void OnClickHost()
