@@ -58,7 +58,7 @@ public class GameClient : MonoBehaviour
             ScenesHandler.Singleton.LoadScene("Main_Menu", UnityEngine.SceneManagement.LoadSceneMode.Single);
         }
 
-        if (functionsQueue.Count > 0)
+        while (functionsQueue.Count > 0)
         {
             //Maybe add foreach or while != 0
             (PacketType, object) dequeuedFunction = functionsQueue.Dequeue();

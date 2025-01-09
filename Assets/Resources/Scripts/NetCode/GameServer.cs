@@ -47,7 +47,7 @@ public class GameServer : MonoBehaviour
 
     private void Update()
     {
-        if (functionsQueue.Count > 0)
+        while (functionsQueue.Count > 0)
         {
             //Maybe add foreach or while != 0
             (PacketType, object, EndPoint) dequeuedFunction = functionsQueue.Dequeue();
