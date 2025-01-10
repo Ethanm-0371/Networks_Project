@@ -243,6 +243,7 @@ public class PlayerBehaviour : NetObject
     public void AttachCamera()
     {
         Camera.main.gameObject.GetComponent<PlayerCamera>().SetParent(camPivot);
+        Camera.main.transform.rotation = transform.rotation;
     }
 
     bool FindDoor()

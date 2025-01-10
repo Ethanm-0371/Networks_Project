@@ -4,12 +4,12 @@ using UnityEngine;
 
 public class Level1Manager : MonoBehaviour
 {
-    [SerializeField] ExtractionZone extractionZone;
+    [SerializeField] TriggerEventCaller extractionZone;
     int playersOnExtraction = 0;
 
     private void Start()
     {
-        extractionZone.PlayerEnteredZone.AddListener(() => 
+        extractionZone.PlayerEnteredTrigger.AddListener(() => 
         { 
             playersOnExtraction++;
             if (playersOnExtraction >= GameServer.Singleton.GetNumberOfPlayers())
@@ -17,7 +17,7 @@ public class Level1Manager : MonoBehaviour
                 GameServer.Singleton.EndGame();
             }
         });
-        extractionZone.PlayerLeftZone.AddListener(() => { playersOnExtraction--; });
+        extractionZone.PlayerLeftTrigger.AddListener(() => { playersOnExtraction--; });
     }
 
     private void OnEnable()

@@ -342,11 +342,11 @@ public class GameServer : MonoBehaviour
 
         if (isPlaying)
         {
-            GameObject.Find("LevelManager").GetComponent<Level1Manager>().enabled = true;
+            GameObject.Find("LevelManager").GetComponent<Level2Manager>().enabled = true;
         }
         else
         {
-            GameObject.Find("LevelManager").GetComponent<Level1Manager>().enabled = false;
+            GameObject.Find("LevelManager").GetComponent<Level2Manager>().enabled = false;
         }
     }
 

@@ -70,6 +70,7 @@ public class NetObjectsHandler : MonoBehaviour
         if (objectType == typeof(Wrappers.Player))
         {
             newNetObj.transform.position = playerSpawnPoints[spawnedPlayers % 4].transform.position;
+            newNetObj.transform.rotation = playerSpawnPoints[spawnedPlayers % 4].transform.rotation;
             spawnedPlayers++;
 
             newNetObj.GetComponent<PlayerBehaviour>().InitPlayer((Wrappers.Player)objectToInstantiate);
