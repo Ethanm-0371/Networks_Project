@@ -81,9 +81,17 @@ public class GameClient : MonoBehaviour
 
         PacketHandler.SendPacket(clientSocket, serverEndPoint, PacketType.Disconnect, new Wrappers.Disconnect(0));
 
+        if (netObjsHandler != null)
+        {
+            Destroy(netObjsHandler);
+            netObjsHandler = null;
+        }
+
         clientSocket.Shutdown(SocketShutdown.Both); //Disables sending and receiving
         clientSocket.Close(); //Closes the connection and frees all associated resources
         pingReceived = false;
+
+        Destroy(this.gameObject);
     }
 
     #region Client Functions

@@ -6,21 +6,33 @@ public class PauseMenuScreen : MonoBehaviour
 {
     [SerializeField] GameObject canvas;
 
+    bool isMenuActive = false;
+
     void Update()
     {
         if (Input.GetKeyDown(KeyCode.Escape))
         {
-            canvas.SetActive(!canvas.activeSelf);
-
-            if (canvas.activeSelf) Cursor.lockState = CursorLockMode.None;
-            else Cursor.lockState = CursorLockMode.Locked;
-
+            ToggleMenu();
         }
+    }
+
+    private void ToggleMenu()
+    {
+        isMenuActive = !isMenuActive;
+        canvas.SetActive(isMenuActive);
+        UpdateCursorState(isMenuActive);
+        GameClient.Singleton.ownedPlayerGO.GetComponentInChildren<PlayerBehaviour>().lockCamera = isMenuActive;
+    }
+
+    private void UpdateCursorState(bool isMenuOpen)
+    {
+        Cursor.lockState = isMenuOpen ? CursorLockMode.None : CursorLockMode.Locked;
+        Cursor.visible = isMenuOpen;
     }
 
     public void OnClickContinue()
     {
-        canvas.SetActive(!canvas.activeSelf);
+        ToggleMenu();
     }
 
     public void OnClickExitServer()
@@ -29,7 +41,10 @@ public class PauseMenuScreen : MonoBehaviour
         {
             Destroy(GameServer.Singleton);
         }
-        Destroy(GameClient.Singleton);
+        if (GameClient.Singleton != null)
+        {
+            Destroy(GameClient.Singleton);
+        }
 
         ScenesHandler.Singleton.LoadScene("Main_Menu", UnityEngine.SceneManagement.LoadSceneMode.Single);
     }
@@ -40,7 +55,10 @@ public class PauseMenuScreen : MonoBehaviour
         {
             Destroy(GameServer.Singleton);
         }
-        Destroy(GameClient.Singleton);
+        if (GameClient.Singleton != null)
+        {
+            Destroy(GameClient.Singleton);
+        }
 
         Application.Quit();
     }

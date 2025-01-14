@@ -9,7 +9,6 @@ public class PlayerBehaviour : NetObject
     public string ownerName;
     float moveSpeed = 5f;
 
-
     // Last state variables
     bool actionsChanged = false;
     List<ActionsInFrame> pendingActions = new List<ActionsInFrame>();
@@ -22,6 +21,7 @@ public class PlayerBehaviour : NetObject
     [SerializeField] PlayerCamera playerCam;
     [SerializeField] Transform gunPivot;
     public Transform camPivot;
+    public bool lockCamera = false;
 
     Gun currentGun;
 
@@ -36,7 +36,7 @@ public class PlayerBehaviour : NetObject
 
     private void Update()
     {
-        if(isOwner)
+        if (isOwner)
         {
             HandleInput();
         }
@@ -67,12 +67,18 @@ public class PlayerBehaviour : NetObject
             if (FindDoor()) actionsInFrame.Add(new PlayerAction(PlayerAction.ActionType.OpenDoor));
         }
 
-        float mouseX = Input.GetAxis("Mouse X");
-        float mouseY = Input.GetAxis("Mouse Y");
+        float mouseX = 0;
+        float mouseY = 0;
+
+        if (!lockCamera)
+        {
+            mouseX = Input.GetAxis("Mouse X");
+            mouseY = Input.GetAxis("Mouse Y");
+        }
 
         if (mouseX != 0 || mouseY != 0)
         {
-            actionsInFrame.Add(new PlayerAction(PlayerAction.ActionType.Rotate, new List<string>() { (mouseX * sensitivity).ToString(), 
+            actionsInFrame.Add(new PlayerAction(PlayerAction.ActionType.Rotate, new List<string>() { (mouseX * sensitivity).ToString(),
                                                                                                      (mouseY * sensitivity).ToString() }));
         }
 
@@ -104,7 +110,7 @@ public class PlayerBehaviour : NetObject
                     Move(action.actionType, actions.frameDeltaTime);
                     break;
                 case PlayerAction.ActionType.Rotate:
-                    Rotate(float.Parse(action.parameters[0]) * actions.frameDeltaTime, 
+                    Rotate(float.Parse(action.parameters[0]) * actions.frameDeltaTime,
                            float.Parse(action.parameters[1]) * actions.frameDeltaTime);
                     break;
                 case PlayerAction.ActionType.Shot:
@@ -148,7 +154,7 @@ public class PlayerBehaviour : NetObject
             transform.Translate(direction * moveSpeed * deltaTime, Space.World);
 
             if (transform.position != lastPosition) positionChanged = true;
-            
+
         }
     }
     void Rotate(float xIncrement, float yIncrement)
