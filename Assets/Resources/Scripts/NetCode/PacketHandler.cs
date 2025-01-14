@@ -40,6 +40,14 @@ public static class PacketHandler
         foreach (var item in objectsToAdd)                                      //First we make a list of all of the objects we want to encode and their respective info
         {
             byte[] entry = item.Serialize();
+            int entrySize = entry.Length + 3;                                   //+3 from the 2 bytes of the size and the 1 from the type
+
+            if (totalDataSize + entrySize > 1023)
+            {
+                Debug.LogWarning("Packet data is bigger than 1024 bytes. Remaining packets will be sent next update.");
+                break;
+            }
+
             dataToAdd.Add(BitConverter.GetBytes((short)entry.Length));          //Put 2 bytes in front of the data to specify the size of it
 
             byte[] classType = new byte[1];
@@ -47,10 +55,7 @@ public static class PacketHandler
             dataToAdd.Add(classType);
 
             dataToAdd.Add(entry);
-            totalDataSize += entry.Length + 3;                                  //+3 from the 2 bytes of the size and the 1 from the type
-
-            if (totalDataSize > 1023)
-                Debug.LogWarning("Packet data is bigger than 1024 bytes");
+            totalDataSize += entrySize;
         }
 
         byte[] result = new byte[totalDataSize + 3];                            //+3 because 1 from the PaketType byte, 1 from the list flag and 1 from number of entries
