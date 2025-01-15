@@ -30,7 +30,6 @@ public class BasicEnemy : NetObject
     {
         agent = GetComponent<NavMeshAgent>();
 
-        GameObject.FindGameObjectsWithTag("Player", playerList);
         currentHealth = maxHealth;
     }
 
@@ -42,6 +41,8 @@ public class BasicEnemy : NetObject
 
     void CheckState()
     {
+        GameObject.FindGameObjectsWithTag("Player", playerList);
+
         float smallestDistance = Vector3.Distance(transform.position, playerList[0].transform.position);
         targetPlayer = playerList[0];
 
