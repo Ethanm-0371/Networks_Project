@@ -22,7 +22,6 @@ Most of the work was done using pair programming, where both of us collaborated 
 - Make sure you create a server.
 - Then, other clients should put the local host IP (127.0.0.1).
 - WASD for movement Input. LMB to shoot.
-- B to Start the game (only the host).
 - E to Open the door.
 - ESC open Pause Screen. (only in Gameplay)
 
