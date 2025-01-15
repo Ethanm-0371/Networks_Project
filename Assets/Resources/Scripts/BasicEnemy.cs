@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.AI;
 
 public class BasicEnemy : NetObject
 {
@@ -12,6 +13,7 @@ public class BasicEnemy : NetObject
     }
 
     public State currentState = State.Idle;
+    NavMeshAgent agent;
 
     List<GameObject> playerList = new List<GameObject>();
     GameObject targetPlayer;
@@ -26,6 +28,8 @@ public class BasicEnemy : NetObject
 
     private void Start()
     {
+        agent = GetComponent<NavMeshAgent>();
+
         GameObject.FindGameObjectsWithTag("Player", playerList);
         currentHealth = maxHealth;
     }
@@ -57,6 +61,8 @@ public class BasicEnemy : NetObject
         }
         else if (currentState != State.Idle && smallestDistance > loseRadius)
         {
+            agent.SetDestination(transform.position);
+
             currentState = State.Idle;
         }
     }
@@ -84,8 +90,7 @@ public class BasicEnemy : NetObject
     }
     void DoChase()
     {
-        transform.position = Vector3.MoveTowards(transform.position, targetPlayer.transform.position, movementSpeed * Time.deltaTime);
-        transform.LookAt(targetPlayer.transform);
+        agent.SetDestination(targetPlayer.transform.position);
     }
 
     private void OnDrawGizmos()
