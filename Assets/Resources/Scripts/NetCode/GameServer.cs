@@ -22,7 +22,7 @@ public class GameServer : MonoBehaviour
     Queue<(PacketType, object, EndPoint)> functionsQueue = new Queue<(PacketType, object, EndPoint)>();
     Dictionary<PacketType, Action<object, EndPoint>> functionsDictionary;
 
-    bool gameStarted = false;
+    bool gameStarted = true;
     float netObjsSendFrequency = 2.0f;
 
     private void Awake()
@@ -246,7 +246,7 @@ public class GameServer : MonoBehaviour
         netObjectsInfo.Clear();
 
         //Send order to change scene
-        BroadCastPacket(PacketType.ChangeSceneCommand, new Wrappers.ChangeSceneCommand("Lobby"), null);
+        BroadCastPacket(PacketType.ChangeSceneCommand, new Wrappers.ChangeSceneCommand("Main_Menu"), null);
     }
 
     #endregion

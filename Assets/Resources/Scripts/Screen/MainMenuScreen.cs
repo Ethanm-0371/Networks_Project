@@ -22,6 +22,8 @@ public class MainMenuScreen : MonoBehaviour
         QualitySettings.vSyncCount = 0;
 
         ScenesHandler.Singleton?.SetReady();
+
+        if (GameClient.Singleton != null) { Destroy(GameClient.Singleton.gameObject); }
     }
 
     public void OnClickHost()
@@ -32,7 +34,7 @@ public class MainMenuScreen : MonoBehaviour
         serverGO.GetComponent<GameServer>().Init();
         serverGO.GetComponent<GameClient>().Init(IPAddress.Loopback.ToString(), HostUsernameInputField.text);
 
-        ScenesHandler.Singleton.LoadScene("Lobby", LoadSceneMode.Single);
+        ScenesHandler.Singleton.LoadScene("Level_2", LoadSceneMode.Single);
     }
     public void OnClickJoin()
     {
@@ -45,7 +47,7 @@ public class MainMenuScreen : MonoBehaviour
         GameObject clientGO = (GameObject) Instantiate(clientPrefab);
         clientGO.GetComponent<GameClient>().Init(IPInputField.text, ClientUsernameInputField.text);
 
-        ScenesHandler.Singleton.LoadScene("Lobby", LoadSceneMode.Single);
+        ScenesHandler.Singleton.LoadScene("Level_2", LoadSceneMode.Single);
     }
     public void OnClickExit()
     {
