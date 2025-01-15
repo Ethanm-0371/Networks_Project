@@ -87,7 +87,7 @@ public class BasicEnemy : NetObject
 
     void DoIdle()
     {
-        transform.Rotate(Vector3.up * 10.0f);
+        transform.Rotate(Vector3.up * 2.0f);
     }
     void DoChase()
     {
