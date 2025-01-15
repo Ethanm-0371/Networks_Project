@@ -30,7 +30,7 @@ Most of the work was done using pair programming, where both of us collaborated 
 Scenes/Main_Menu
 
 # Some difficulties
-- There's an error when trying to move before starting the game. The game receives an action packet in which there is no owner for it and a null exception occurs. We added a delay of 5s so that the player can not input anything when all the players are loaded.
+- There's an error when trying to move before starting the game. The game receives an action packet in which there is no owner for it and a null exception occurs.
 - There was a bug in which the players were spawning outside the safezone. It is currently fixed, but this took a lot of time to fix.
 
 
