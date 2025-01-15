@@ -17,7 +17,9 @@ public class PlayerBehaviour : NetObject
     //bool rotationChanged = false;
     //private Quaternion lastRotation;
 
-    [SerializeField] float sensitivity = 20.0f;
+    [SerializeField] float sensitivity = 100.0f;
+    [SerializeField] float verticalRotation = 0f;
+    [SerializeField] const float maxAngle = 90f;
     [SerializeField] PlayerCamera playerCam;
     [SerializeField] Transform gunPivot;
     public Transform camPivot;
@@ -160,7 +162,12 @@ public class PlayerBehaviour : NetObject
     void Rotate(float xIncrement, float yIncrement)
     {
         transform.Rotate(Vector3.up * xIncrement);
-        camPivot.Rotate(Vector3.right * -yIncrement);
+
+        verticalRotation += -yIncrement;
+
+        verticalRotation = Mathf.Clamp(verticalRotation, -maxAngle, maxAngle);
+
+        camPivot.localRotation = Quaternion.Euler(verticalRotation, 0f, 0f);
     }
     void ShootCurrentGun(PlayerAction shotAction)
     {
