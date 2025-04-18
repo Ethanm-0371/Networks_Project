@@ -41,12 +41,13 @@ public class PauseMenuScreen : MonoBehaviour
         {
             Destroy(GameServer.Singleton);
         }
+
         if (GameClient.Singleton != null)
         {
             Destroy(GameClient.Singleton);
         }
 
-        ScenesHandler.Singleton.LoadScene("Main_Menu", UnityEngine.SceneManagement.LoadSceneMode.Single);
+        ScenesHandler.Singleton.LoadScene("0_MainMenu", UnityEngine.SceneManagement.LoadSceneMode.Single);
     }
 
     public void OnClickExitToDesktop()
@@ -55,6 +56,7 @@ public class PauseMenuScreen : MonoBehaviour
         {
             Destroy(GameServer.Singleton);
         }
+
         if (GameClient.Singleton != null)
         {
             Destroy(GameClient.Singleton);
@@ -62,4 +64,5 @@ public class PauseMenuScreen : MonoBehaviour
 
         Application.Quit();
     }
+
 }

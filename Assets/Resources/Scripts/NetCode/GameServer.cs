@@ -13,6 +13,7 @@ public class GameServer : MonoBehaviour
 
     Socket serverSocket;
     Thread mainReceivingThread;
+    private const int port = 9050;
 
     Dictionary<EndPoint, string> connectedUsers = new Dictionary<EndPoint, string>();
 
@@ -49,7 +50,6 @@ public class GameServer : MonoBehaviour
     {
         while (functionsQueue.Count > 0)
         {
-            //Maybe add foreach or while != 0
             (PacketType, object, EndPoint) dequeuedFunction = functionsQueue.Dequeue();
             functionsDictionary[dequeuedFunction.Item1](dequeuedFunction.Item2, dequeuedFunction.Item3);
         }
@@ -59,6 +59,7 @@ public class GameServer : MonoBehaviour
             if (!gameStarted)
                 StartGame();
         }
+
         if (Input.GetKeyDown(KeyCode.N))
         {
             if (gameStarted)
@@ -75,12 +76,12 @@ public class GameServer : MonoBehaviour
         serverSocket.Close(); //Closes the connection and frees all associated resources
     }
 
+    // Server functions --------------------------------------------------------------------------------
     #region Server Functions
-
     public void Init()
     {
         serverSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-        IPEndPoint ipep = new IPEndPoint(IPAddress.Any, 9050);
+        IPEndPoint ipep = new IPEndPoint(IPAddress.Any, port);
 
         serverSocket.Bind(ipep);
 
@@ -105,7 +106,7 @@ public class GameServer : MonoBehaviour
                 recv = serverSocket.ReceiveFrom(data, ref Remote);
                 if (recv == 0) { continue; }
             }
-            catch (SocketException ex) 
+            catch (SocketException ex)
             {
                 Debug.LogWarning("SocketException error (GameServer Receive()): " + ex.Message);
             }
@@ -163,16 +164,17 @@ public class GameServer : MonoBehaviour
 
     #endregion
 
+    // Handler functions -------------------------------------------------------------------------------
     #region Handler Functions
 
     void StartServerFunctions()
     {
         functionsDictionary = new Dictionary<PacketType, Action<object, EndPoint>>()
         {
-            { PacketType.Ping, (obj, ep) => { HandlePing(ep); } },
-            { PacketType.Disconnect, (obj, ep) => { HandleDisconnect(ep); } },
-            { PacketType.PlayerData, (obj, ep) => { AddUserToDictionary(ep, (Wrappers.UserData)obj); } },
-            { PacketType.SceneLoadedFlag, (obj, ep) => { HandleClientSceneLoaded(ep); } },
+            { PacketType.Ping,              (obj, ep) => { HandlePing(ep); } },
+            { PacketType.Disconnect,        (obj, ep) => { HandleDisconnect(ep); } },
+            { PacketType.PlayerData,        (obj, ep) => { AddUserToDictionary(ep, (Wrappers.UserData)obj); } },
+            { PacketType.SceneLoadedFlag,   (obj, ep) => { HandleClientSceneLoaded(ep); } },
             { PacketType.playerActionsList, (obj, ep) => { HandlePlayerActions((Wrappers.PlayerActionList)obj, ep); } },
         };
     }
@@ -202,13 +204,13 @@ public class GameServer : MonoBehaviour
             // Send ping back to client
             PacketHandler.SendPacket(serverSocket, ipep, PacketType.Ping, new Wrappers.PingData(0));
         }
-
     }
 
     void AddUserToDictionary(EndPoint ep, Wrappers.UserData playerData)
     {
         connectedUsers.Add(ep, playerData.userName);
     }
+
     void HandleClientSceneLoaded(EndPoint ep)
     {
         AddNewNetObjectInfo(new Wrappers.Player(connectedUsers[ep]));
@@ -221,6 +223,7 @@ public class GameServer : MonoBehaviour
         PacketHandler.SendPacket(serverSocket, ipep, PacketType.netObjsDictionary, dictionaryToSend);
         BroadCastPacket(PacketType.netObjsDictionary, dictionaryToSend, ipep);
     }
+
     void HandlePlayerActions(Wrappers.PlayerActionList actionsListContainer, EndPoint senderEP)
     {
         BroadCastPacket(PacketType.playerActionsList, actionsListContainer, senderEP);
@@ -228,6 +231,7 @@ public class GameServer : MonoBehaviour
 
     #endregion
 
+    // Game functions ----------------------------------------------------------------------------------
     #region Game Functions
 
     void StartGame()
@@ -239,6 +243,7 @@ public class GameServer : MonoBehaviour
         //Send order to change scene
         BroadCastPacket(PacketType.ChangeSceneCommand, new Wrappers.ChangeSceneCommand("Level_2"), null);
     }
+
     public void EndGame()
     {
         gameStarted = false;
@@ -246,18 +251,21 @@ public class GameServer : MonoBehaviour
         netObjectsInfo.Clear();
 
         //Send order to change scene
-        BroadCastPacket(PacketType.ChangeSceneCommand, new Wrappers.ChangeSceneCommand("Main_Menu"), null);
+        BroadCastPacket(PacketType.ChangeSceneCommand, new Wrappers.ChangeSceneCommand("0_MainMenu"), null);
     }
 
     #endregion
 
+    // Helper functions --------------------------------------------------------------------------------
     #region Helper Functions
 
     //Object info dictionary functions
     public void AddNewNetObjectInfo(NetInfo objectToAdd)
     {
         netObjectsInfo.Add(GenerateRandomID(), objectToAdd);
+        //System.Guid.NewGuid() ??
     }
+
     public void MarkObjectToDelete(uint netObjectID)
     {
         objectsToDelete.Add(netObjectID);
@@ -273,6 +281,7 @@ public class GameServer : MonoBehaviour
                 netObjectsInfo[item.Key] = item.Value.GetComponent<NetObject>().GetNetInfo();
         }
     }
+
     List<NetInfo> GetNetInfoDictionaryList()
     {
         UpdateNetObjsInfo();
@@ -332,10 +341,12 @@ public class GameServer : MonoBehaviour
         // Convert the byte array to a uint
         return id;
     }
+
     public int GetNumberOfPlayers()
     {
         return connectedUsers.Count;
     }
+
     public void SetLevelStatus(bool isPlaying)
     {
         //This could be improved

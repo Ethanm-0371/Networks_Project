@@ -10,6 +10,9 @@ public class EntityManager : MonoBehaviour
 
     public List<Level2Manager.ZoneTrigger> roomGroups;
 
+    public int currentZombieCount = 0;
+    private const int maxZombies = 20;
+
     private void Start()
     {
         worldSpawns = GameObject.FindGameObjectsWithTag("ZombieSpawnPoint");
@@ -41,6 +44,8 @@ public class EntityManager : MonoBehaviour
         {
             yield return new WaitForSeconds(5.0f);
 
+            if (currentZombieCount >= maxZombies) continue;
+
             foreach (var group in roomGroups)
             {
                 if (!group.isActive) { continue; }
@@ -49,11 +54,18 @@ public class EntityManager : MonoBehaviour
                 {
                     //int roomNum = UnityEngine.Random.Range(0, roomSpawns.Length); ???
                     //(This is correct, just depends on wether implementation is random or not)
+                    if (currentZombieCount >= maxZombies) yield break;
 
                     int roomPosInArray = Array.IndexOf(roomSpawns, room.gameObject);
                     GameServer.Singleton.AddNewNetObjectInfo(new Wrappers.BasicZombie(roomPosInArray, true));
+                    currentZombieCount++;
                 }
             }
         }
+    }
+
+    public void OnZombieDeath()
+    {
+        currentZombieCount--;
     }
 }

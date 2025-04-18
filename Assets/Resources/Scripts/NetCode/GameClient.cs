@@ -13,6 +13,7 @@ public class GameClient : MonoBehaviour
     public Socket clientSocket;
     public IPEndPoint serverEndPoint;
     Thread mainReceivingThread;
+    private const int port = 9050;
 
     public string userName;
     public GameObject ownedPlayerGO = null;
@@ -94,12 +95,13 @@ public class GameClient : MonoBehaviour
         Destroy(this.gameObject);
     }
 
+    // Client functions --------------------------------------------------------------------------------
     #region Client Functions
 
     public void Init(string ip, string username)
     {
         clientSocket = new Socket(AddressFamily.InterNetwork, SocketType.Dgram, ProtocolType.Udp);
-        serverEndPoint = new IPEndPoint(IPAddress.Parse(ip), 9050); //Change port to another inputfield
+        serverEndPoint = new IPEndPoint(IPAddress.Parse(ip), port);
 
         // Send ping
         pingCoroutine = StartCoroutine(PingServer(timeoutDuration));
@@ -113,6 +115,7 @@ public class GameClient : MonoBehaviour
 
         playerSendActions = StartCoroutine(SendPlayerActions(playerActionsSendFrequency));
     }
+
     void Receive()
     {
         IPEndPoint sender = new IPEndPoint(serverEndPoint.Address, 0);
@@ -187,7 +190,8 @@ public class GameClient : MonoBehaviour
 
     #endregion
 
-    #region HandlerFunctions
+    // Handler functions -------------------------------------------------------------------------------
+    #region Handler Functions
 
     void StartClientFunctions()
     {
@@ -219,12 +223,14 @@ public class GameClient : MonoBehaviour
         netObjsHandler.netGameObjects.Clear();
         ScenesHandler.Singleton.LoadScene(command.targetSceneName, UnityEngine.SceneManagement.LoadSceneMode.Single);
     }
+
     void HandleReceiveNetObjects(List<NetInfo> netObjectsInfo)
     {
         netObjsHandler.CheckNetObjects(netObjectsInfo);
 
         ScenesHandler.Singleton.SetReady();
     }
+
     void HandlePlayerActions(Wrappers.PlayerActionList list)
     {
         foreach (var actions in list.l)
@@ -234,4 +240,5 @@ public class GameClient : MonoBehaviour
     }
 
     #endregion
+
 }
