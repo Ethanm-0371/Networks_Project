@@ -51,13 +51,14 @@ public class BasicEnemy : NetObject
         float smallestDistance = Vector3.Distance(transform.position, playerList[0].transform.position);
         targetPlayer = playerList[0];
 
-        foreach (var item in playerList)
+        // Check distance for all players
+        foreach (var player in playerList)
         {
-            float newDistance = Vector3.Distance(transform.position, item.transform.position);
+            float newDistance = Vector3.Distance(transform.position, player.transform.position);
             if (newDistance < smallestDistance)
             {
                 smallestDistance = newDistance;
-                targetPlayer = item;
+                targetPlayer = player;
             }
         }
 
@@ -85,22 +86,19 @@ public class BasicEnemy : NetObject
                 break;
             case State.None:
             default:
-                Debug.LogError("Error");
+                Debug.LogError("Zombie error state. Net ID: " + netID);
                 break;
         }
     }
 
     void DoIdle()
     {
-        // animator.SetBool("Idle3", true);
-        // animator.SetBool("Run1", false);
-        //transform.Rotate(Vector3.up * 2.0f);
+        animator.SetBool("IsChasing", false);
     }
 
     void DoChase()
     {
-        // animator.SetBool("Idle3", false);
-        // animator.SetBool("Run1", false);
+        animator.SetBool("IsChasing", true);
         agent.SetDestination(targetPlayer.transform.position);
     }
 
@@ -141,7 +139,7 @@ public class BasicEnemy : NetObject
             entityManager?.OnZombieDeath();
             GameServer.Singleton?.MarkObjectToDelete(netID);
         }
-        else if(currentHealth > 0)
+        else if (currentHealth > 0)
         {
             currentHealth -= amount;
         }
