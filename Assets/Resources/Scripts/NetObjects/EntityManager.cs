@@ -11,7 +11,7 @@ public class EntityManager : MonoBehaviour
     public List<Level2Manager.ZoneTrigger> roomGroups;
 
     public int currentZombieCount = 0;
-    private const int maxZombies = 20;
+    private const int maxZombies = 15;
 
     private void Start()
     {
@@ -23,6 +23,7 @@ public class EntityManager : MonoBehaviour
         for (int i = 0; i < worldSpawns.Length; i++)
         {
             GameServer.Singleton.AddNewNetObjectInfo(new Wrappers.BasicZombie(i, false));
+            currentZombieCount++;
         }
     }
 
@@ -67,5 +68,6 @@ public class EntityManager : MonoBehaviour
     public void OnZombieDeath()
     {
         currentZombieCount--;
+        //Debug.Log("Zombie killed. Current zombie count: " + currentZombieCount);
     }
 }

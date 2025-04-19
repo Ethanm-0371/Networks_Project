@@ -13,7 +13,7 @@ public class GameServer : MonoBehaviour
 
     Socket serverSocket;
     Thread mainReceivingThread;
-    private const int port = 9050;
+    const int port = 9050;
 
     Dictionary<EndPoint, string> connectedUsers = new Dictionary<EndPoint, string>();
 
@@ -26,7 +26,7 @@ public class GameServer : MonoBehaviour
     bool gameStarted = true;
     float netObjsSendFrequency = 2.0f;
 
-    private void Awake()
+    void Awake()
     {
         #region Singleton
 
@@ -46,7 +46,7 @@ public class GameServer : MonoBehaviour
         StartServerFunctions();
     }
 
-    private void Update()
+    void Update()
     {
         while (functionsQueue.Count > 0)
         {
@@ -67,7 +67,7 @@ public class GameServer : MonoBehaviour
         }
     }
 
-    private void OnDestroy()
+    void OnDestroy()
     {
         BroadCastPacket(PacketType.Disconnect, new Wrappers.Disconnect(0), null);
         mainReceivingThread.Abort(); //Forces thread termination before cleaning sockets
@@ -91,6 +91,7 @@ public class GameServer : MonoBehaviour
 
         StartCoroutine(SendDictionaryUpdates(netObjsSendFrequency));
     }
+
     void Receive()
     {
         IPEndPoint sender = new IPEndPoint(IPAddress.Any, 0);
@@ -134,6 +135,7 @@ public class GameServer : MonoBehaviour
             PacketHandler.SendPacket(serverSocket, ipep, type, objectToSend);
         }
     }
+
     void BroadCastPacket(PacketType type, List<NetInfo> infoList, EndPoint sender)
     {
         foreach (var user in connectedUsers)
@@ -173,7 +175,7 @@ public class GameServer : MonoBehaviour
         {
             { PacketType.Ping,              (obj, ep) => { HandlePing(ep); } },
             { PacketType.Disconnect,        (obj, ep) => { HandleDisconnect(ep); } },
-            { PacketType.PlayerData,        (obj, ep) => { AddUserToDictionary(ep, (Wrappers.UserData)obj); } },
+            { PacketType.PlayerData,        (obj, ep) => { HandlePlayerData(ep, (Wrappers.UserData)obj); } },
             { PacketType.SceneLoadedFlag,   (obj, ep) => { HandleClientSceneLoaded(ep); } },
             { PacketType.playerActionsList, (obj, ep) => { HandlePlayerActions((Wrappers.PlayerActionList)obj, ep); } },
         };
@@ -206,7 +208,7 @@ public class GameServer : MonoBehaviour
         }
     }
 
-    void AddUserToDictionary(EndPoint ep, Wrappers.UserData playerData)
+    void HandlePlayerData(EndPoint ep, Wrappers.UserData playerData)
     {
         connectedUsers.Add(ep, playerData.userName);
     }
@@ -241,7 +243,8 @@ public class GameServer : MonoBehaviour
         netObjectsInfo.Clear();
 
         //Send order to change scene
-        BroadCastPacket(PacketType.ChangeSceneCommand, new Wrappers.ChangeSceneCommand("Level_2"), null);
+        // Replace with the scene that generates with a seed.
+        BroadCastPacket(PacketType.ChangeSceneCommand, new Wrappers.ChangeSceneCommand("Level_2"), null); 
     }
 
     public void EndGame()

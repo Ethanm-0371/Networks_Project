@@ -93,6 +93,7 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   currentState: 1
+  animator: {fileID: 9048280090246497628}
   loseRadius: 10
   detectionRadius: 5
   movementSpeed: 1
@@ -203,6 +204,11 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: d27bb82bbc54f8a41b9c3129ef034a94, type: 3}
+--- !u!95 &9048280090246497628 stripped
+Animator:
+  m_CorrespondingSourceObject: {fileID: 7709792883443893007, guid: d27bb82bbc54f8a41b9c3129ef034a94, type: 3}
+  m_PrefabInstance: {fileID: 1688670683403634259}
+  m_PrefabAsset: {fileID: 0}
 --- !u!4 &9048280090471856185 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 7709792882650234474, guid: d27bb82bbc54f8a41b9c3129ef034a94, type: 3}

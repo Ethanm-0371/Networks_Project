@@ -13,7 +13,7 @@ public class GameClient : MonoBehaviour
     public Socket clientSocket;
     public IPEndPoint serverEndPoint;
     Thread mainReceivingThread;
-    private const int port = 9050;
+    const int port = 9050;
 
     public string userName;
     public GameObject ownedPlayerGO = null;
@@ -30,7 +30,7 @@ public class GameClient : MonoBehaviour
 
     NetObjectsHandler netObjsHandler;
 
-    private void Awake()
+    void Awake()
     {
         #region Singleton
 
@@ -52,7 +52,7 @@ public class GameClient : MonoBehaviour
         netObjsHandler = gameObject.AddComponent<NetObjectsHandler>();
     }
 
-    private void Update()
+    void Update()
     {
 
         if (Input.GetKeyDown(KeyCode.Backspace))
@@ -68,7 +68,7 @@ public class GameClient : MonoBehaviour
         }
     }
 
-    private void OnDestroy()
+    void OnDestroy()
     {
         mainReceivingThread.Abort(); //Forces thread termination before cleaning sockets
 
@@ -197,19 +197,20 @@ public class GameClient : MonoBehaviour
     {
         functionsDictionary = new Dictionary<PacketType, Action<object>>()
         {
-            { PacketType.Ping, obj => { HandlePing(); } },
-            { PacketType.Disconnect, obj => { HandleDisconnect(); } },
+            { PacketType.Ping,               obj => { HandlePing(); } },
+            { PacketType.Disconnect,         obj => { HandleDisconnect(); } },
             { PacketType.ChangeSceneCommand, obj => { HandleSceneChange((Wrappers.ChangeSceneCommand)obj); } },
-            { PacketType.netObjsDictionary, obj => { HandleReceiveNetObjects((List<NetInfo>)obj); } },
-            { PacketType.playerActionsList, obj => { HandlePlayerActions((Wrappers.PlayerActionList)obj); } },
+            { PacketType.netObjsDictionary,  obj => { HandleReceiveNetObjects((List<NetInfo>)obj); } },
+            { PacketType.playerActionsList,  obj => { HandlePlayerActions((Wrappers.PlayerActionList)obj); } },
         };
     }
 
-    private void HandleDisconnect()
+    void HandleDisconnect()
     {
         Destroy(this.gameObject);
 
-        ScenesHandler.Singleton.LoadScene("Main_Menu", UnityEngine.SceneManagement.LoadSceneMode.Single);
+        // Returns player to the Main Menu scene
+        ScenesHandler.Singleton.LoadScene("0_MainMenu", UnityEngine.SceneManagement.LoadSceneMode.Single);
     }
 
     void HandlePing()

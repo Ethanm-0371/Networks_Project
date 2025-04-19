@@ -18,6 +18,10 @@ public class BasicEnemy : NetObject
     List<GameObject> playerList = new List<GameObject>();
     GameObject targetPlayer;
 
+    EntityManager entityManager;
+
+    [SerializeField] Animator animator;
+
     [SerializeField] float loseRadius = 15.0f;
     [SerializeField] float detectionRadius = 10.0f;
     [SerializeField] float movementSpeed = 0.25f;
@@ -26,14 +30,15 @@ public class BasicEnemy : NetObject
     public int currentHealth;
     bool isDead = false;
 
-    private void Start()
+    void Start()
     {
         agent = GetComponent<NavMeshAgent>();
+        entityManager = FindFirstObjectByType<EntityManager>();
 
         currentHealth = maxHealth;
     }
 
-    private void Update()
+    void Update()
     {
         CheckState();
         ExecuteState();
@@ -87,14 +92,19 @@ public class BasicEnemy : NetObject
 
     void DoIdle()
     {
-        transform.Rotate(Vector3.up * 2.0f);
+        // animator.SetBool("Idle3", true);
+        // animator.SetBool("Run1", false);
+        //transform.Rotate(Vector3.up * 2.0f);
     }
+
     void DoChase()
     {
+        // animator.SetBool("Idle3", false);
+        // animator.SetBool("Run1", false);
         agent.SetDestination(targetPlayer.transform.position);
     }
 
-    private void OnDrawGizmos()
+    void OnDrawGizmos()
     {
         Gizmos.DrawWireSphere(transform.position, detectionRadius);
         Gizmos.DrawWireSphere(transform.position, loseRadius);
@@ -128,6 +138,7 @@ public class BasicEnemy : NetObject
         if (currentHealth <= 0 && !isDead)
         {
             isDead = true;
+            entityManager?.OnZombieDeath();
             GameServer.Singleton?.MarkObjectToDelete(netID);
         }
         else if(currentHealth > 0)

@@ -32,6 +32,7 @@ public static class PacketHandler
 
         return result;
     }
+
     private static byte[] EncodePacket(PacketType type, List<NetInfo> objectsToAdd)
     {
         List<byte[]> dataToAdd = new List<byte[]>();
@@ -44,7 +45,9 @@ public static class PacketHandler
 
             if (totalDataSize + entrySize > 1023)
             {
+                // Should happen when zombies are spawning too much.
                 Debug.LogWarning("Packet data is bigger than 1024 bytes. Remaining packets will be sent next update.");
+                // Still need to check where we do Clear() of the objectsToAdd
                 break;
             }
 
@@ -87,6 +90,7 @@ public static class PacketHandler
 
         return (type, decodedClass);
     }
+
     public static (PacketType, List<NetInfo>) DecodeMultiPacket(byte[] packet)
     {
         List<NetInfo> returnList = new List<NetInfo>();
@@ -117,11 +121,14 @@ public static class PacketHandler
         return (type, returnList);
     }
 
+    // Send a single packet
     public static void SendPacket(Socket senderSocket, IPEndPoint targetEndPoint, PacketType type, NetInfo infoToSend)
     {
         byte[] data = EncodePacket(type, infoToSend);
         senderSocket.SendTo(data, data.Length, SocketFlags.None, targetEndPoint);
     }
+
+    // Send a list of packets
     public static void SendPacket(Socket senderSocket, IPEndPoint targetEndPoint, PacketType type, List<NetInfo> infoToSend)
     {
         byte[] data = EncodePacket(type, infoToSend);
