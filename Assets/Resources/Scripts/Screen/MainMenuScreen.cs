@@ -11,6 +11,7 @@ public class MainMenuScreen : MonoBehaviour
     [SerializeField] Object clientPrefab;
 
     [SerializeField] TMP_InputField IPInputField;
+    [SerializeField] TMP_InputField AWSInputField;
     [SerializeField] TMP_InputField HostUsernameInputField;
     [SerializeField] TMP_InputField ClientUsernameInputField;
 
@@ -32,7 +33,9 @@ public class MainMenuScreen : MonoBehaviour
 
         GameObject serverGO = (GameObject)Instantiate(serverPrefab);
         serverGO.GetComponent<GameServer>().Init();
-        serverGO.GetComponent<GameClient>().Init(IPAddress.Loopback.ToString(), HostUsernameInputField.text);
+        
+        serverGO.GetComponent<GameClient>().Init(AWSInputField.text, HostUsernameInputField.text);
+        //serverGO.GetComponent<GameClient>().Init(IPAddress.Loopback.ToString(), HostUsernameInputField.text);
 
         ScenesHandler.Singleton.LoadScene("Level_2", LoadSceneMode.Single);
     }

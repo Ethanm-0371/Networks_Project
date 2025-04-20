@@ -509,6 +509,7 @@ namespace Wrappers
 
             return data;
         }
+
         public void Deserialize(byte[] data)
         {
             MemoryStream stream = new MemoryStream(data);
@@ -684,4 +685,6 @@ namespace Wrappers
             stream.Close();
         }
     }
+
+    
 }
