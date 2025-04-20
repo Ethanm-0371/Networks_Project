@@ -139,8 +139,8 @@ public class GameClient : MonoBehaviour
             (PacketType, object) decodedClass;
 
             //Data[1] defines if the packet contains a list
-            if (data[1] != 0) { decodedClass = PacketHandler.DecodeMultiPacket(data); }
-            else { decodedClass = PacketHandler.DecodeSinglePacket(data); }
+            if (data[1] != 0) decodedClass = PacketHandler.DecodeMultiPacket(data);
+            else decodedClass = PacketHandler.DecodeSinglePacket(data);
 
             functionsQueue.Enqueue(decodedClass);
         }

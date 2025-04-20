@@ -115,8 +115,8 @@ public class GameServer : MonoBehaviour
             (PacketType, object) decodedClass;
 
             //Data[1] defines if the packet contains a list
-            if (data[1] != 0) { decodedClass = PacketHandler.DecodeMultiPacket(data); }
-            else { decodedClass = PacketHandler.DecodeSinglePacket(data); }
+            if (data[1] != 0) decodedClass = PacketHandler.DecodeMultiPacket(data);
+            else decodedClass = PacketHandler.DecodeSinglePacket(data);
 
             functionsQueue.Enqueue((decodedClass.Item1, decodedClass.Item2, Remote));
             //functionsDictionary[decodedClass.Item1](decodedClass.Item2, Remote);
@@ -244,7 +244,7 @@ public class GameServer : MonoBehaviour
 
         //Send order to change scene
         // Replace with the scene that generates with a seed.
-        BroadCastPacket(PacketType.ChangeSceneCommand, new Wrappers.ChangeSceneCommand("Level_2"), null); 
+        BroadCastPacket(PacketType.ChangeSceneCommand, new Wrappers.ChangeSceneCommand("Level_2"), null);
     }
 
     public void EndGame()
